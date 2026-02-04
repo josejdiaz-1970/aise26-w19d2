@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv_w19d2/
+.venv/
+*.egg-info/
+*.egg
+
+# Results/Output
+results/
+*.json
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+*.Zone.Identifier
+ehthumbs.db
+Desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter (if anyone uses notebooks)
+.ipynb_checkpoints/
+*.ipynb
+
+# Environment
+.env
+.env.local

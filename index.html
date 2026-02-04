@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W19D2: GitHub Workflow + Q-Learning Improvements</title>
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --primary-light: #34d399;
+            --secondary: #14b8a6;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #334155;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --purple: #8b5cf6;
+            --pink: #ec4899;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary) 100%);
+            padding: 2.5rem 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .header .date {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Section Styles */
+        .section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .section h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.4rem;
+        }
+
+        .section h3 {
+            color: var(--text-primary);
+            margin: 1.5rem 0 0.75rem;
+            font-size: 1.1rem;
+        }
+
+        .section p {
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+        }
+
+        /* Recap Cards */
+        .recap-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .recap-card {
+            background: var(--bg-dark);
+            border-radius: 8px;
+            padding: 1rem;
+            border-left: 3px solid var(--primary);
+        }
+
+        .recap-card h4 {
+            color: var(--primary-light);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .recap-card p {
+            font-size: 0.85rem;
+            margin-bottom: 0;
+        }
+
+        /* Objectives */
+        .objectives-list {
+            list-style: none;
+            margin-top: 1rem;
+        }
+
+        .objectives-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .objectives-list .icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .objectives-list .text {
+            flex: 1;
+        }
+
+        .objectives-list strong {
+            color: var(--text-primary);
+        }
+
+        /* Exercise Steps */
+        .exercise {
+            background: var(--bg-dark);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .exercise-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .exercise-number {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .exercise-title {
+            flex: 1;
+        }
+
+        .exercise-title h3 {
+            color: var(--text-primary);
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .exercise-title .time {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .exercise-content {
+            padding-left: 3.5rem;
+        }
+
+        .exercise-content p {
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+        }
+
+        .exercise-content ul, .exercise-content ol {
+            margin-left: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .exercise-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Code blocks */
+        .code-block {
+            background: #1a1a2e;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+        }
+
+        .code-block .comment { color: #6a9955; }
+        .code-block .command { color: var(--warning); }
+
+        /* Improvement Areas */
+        .improvement-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .improvement-card {
+            background: var(--bg-dark);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            border: 2px solid var(--border);
+            cursor: default;
+        }
+
+        .improvement-card.area-1 { border-color: var(--info); }
+        .improvement-card.area-2 { border-color: var(--purple); }
+        .improvement-card.area-3 { border-color: var(--warning); }
+        .improvement-card.area-4 { border-color: var(--pink); }
+
+        .improvement-card .icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .improvement-card h4 { font-size: 1rem; margin-bottom: 0.25rem; }
+        .improvement-card.area-1 h4 { color: var(--info); }
+        .improvement-card.area-2 h4 { color: var(--purple); }
+        .improvement-card.area-3 h4 { color: var(--warning); }
+        .improvement-card.area-4 h4 { color: var(--pink); }
+        .improvement-card p { font-size: 0.8rem; color: var(--text-muted); margin: 0; }
+
+        /* Links */
+        .link-btn {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            transition: background 0.2s;
+        }
+
+        .link-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .link-btn.secondary {
+            background: var(--bg-card-hover);
+            border: 1px solid var(--border);
+        }
+
+        .link-btn.secondary:hover {
+            border-color: var(--primary);
+        }
+
+        /* Reference Links Section */
+        .reference-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .reference-card {
+            background: var(--bg-dark);
+            border-radius: 8px;
+            padding: 1rem;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s;
+            border: 1px solid var(--border);
+        }
+
+        .reference-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .reference-card h4 {
+            color: var(--primary-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .reference-card p {
+            font-size: 0.85rem;
+            margin: 0;
+        }
+
+        /* Help Section */
+        .help-item {
+            background: var(--bg-dark);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .help-item h4 {
+            color: var(--warning);
+            margin-bottom: 0.5rem;
+        }
+
+        .help-item p {
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .help-item code {
+            background: var(--bg-card);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        /* Alert Box */
+        .alert {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .alert h4 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .alert p {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>W19D2: GitHub Workflow + Q-Learning Improvements</h1>
+        <p>Learn OSS collaboration and improve your Q-Learning agent</p>
+        <div class="date">Week 19, Day 2</div>
+    </header>
+
+    <div class="container">
+        <!-- Section 1: W19D1 Recap -->
+        <div class="section">
+            <h2>Section 1: What You Learned Yesterday (D1 Recap)</h2>
+            <p>Quick refresher on the key concepts from W19D1 before we build on them tonight.</p>
+
+            <div class="recap-grid">
+                <div class="recap-card">
+                    <h4>CartPole Environment</h4>
+                    <p>Balance a pole on a cart. 4 observations (position, velocity, angle, angular velocity), 2 actions (left/right), +1 reward per step.</p>
+                </div>
+                <div class="recap-card">
+                    <h4>Q-Learning Algorithm</h4>
+                    <p>Build a table of state-action values. Update Q(s,a) based on rewards and future value estimates.</p>
+                </div>
+                <div class="recap-card">
+                    <h4>Hyperparameters</h4>
+                    <p>Learning rate, discount factor, epsilon (exploration), number of bins for state discretization.</p>
+                </div>
+                <div class="recap-card">
+                    <h4>Running the Starter</h4>
+                    <p>Auto-venv setup, live training graph, evaluation with epsilon=0, HTML report generation.</p>
+                </div>
+            </div>
+
+            <div style="margin-top: 1.5rem;">
+                <a href="cartpole-explainer.html" class="link-btn secondary">CartPole Reference</a>
+                <a href="hyperparameters-explainer.html" class="link-btn secondary">Hyperparameters Reference</a>
+            </div>
+        </div>
+
+        <!-- Section 2: Tonight's Objectives -->
+        <div class="section">
+            <h2>Section 2: Tonight's Objectives</h2>
+            <p>By the end of tonight, you will have:</p>
+
+            <ul class="objectives-list">
+                <li>
+                    <span class="icon">1.</span>
+                    <div class="text">
+                        <strong>Learned Git/GitHub workflow</strong> - Clone, branch, commit, push, create PRs
+                    </div>
+                </li>
+                <li>
+                    <span class="icon">2.</span>
+                    <div class="text">
+                        <strong>Researched Q-Learning improvements</strong> - Each team member picks one area to explore
+                    </div>
+                </li>
+                <li>
+                    <span class="icon">3.</span>
+                    <div class="text">
+                        <strong>Implemented your improvement</strong> - Modified the starter code with your change
+                    </div>
+                </li>
+                <li>
+                    <span class="icon">4.</span>
+                    <div class="text">
+                        <strong>Created a Pull Request</strong> - Submitted your changes with evaluation results
+                    </div>
+                </li>
+                <li>
+                    <span class="icon">5.</span>
+                    <div class="text">
+                        <strong>Reviewed a teammate's PR</strong> - Provided constructive feedback on their changes
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Section 3: Today's Exercises -->
+        <div class="section">
+            <h2>Section 3: Today's Exercises</h2>
+
+            <!-- Exercise 1 -->
+            <div class="exercise">
+                <div class="exercise-header">
+                    <div class="exercise-number">1</div>
+                    <div class="exercise-title">
+                        <h3>Team Setup</h3>
+                        <div class="time">5 minutes</div>
+                    </div>
+                </div>
+                <div class="exercise-content">
+                    <p>Organize your team and assign roles and improvement areas.</p>
+                    <ol>
+                        <li>Assign team roles: <strong>Runner</strong>, <strong>Maintainer</strong>, <strong>Analyst</strong>, <strong>Reviewer</strong></li>
+                        <li>Each member picks <strong>ONE</strong> improvement area to own:</li>
+                    </ol>
+
+                    <div class="improvement-grid">
+                        <div class="improvement-card area-1">
+                            <div class="icon">1</div>
+                            <h4>Learning Rate</h4>
+                            <p>Decay, adaptive, per-state</p>
+                        </div>
+                        <div class="improvement-card area-2">
+                            <div class="icon">2</div>
+                            <h4>Exploration</h4>
+                            <p>Softmax, UCB, decay schedules</p>
+                        </div>
+                        <div class="improvement-card area-3">
+                            <div class="icon">3</div>
+                            <h4>State Bins</h4>
+                            <p>More bins, non-uniform, focus on angle</p>
+                        </div>
+                        <div class="improvement-card area-4">
+                            <div class="icon">4</div>
+                            <h4>Reward Shaping</h4>
+                            <p>Angle penalty, velocity penalty</p>
+                        </div>
+                    </div>
+
+                    <a href="team-roles.html" class="link-btn">Open Team Roles Tool</a>
+                </div>
+            </div>
+
+            <!-- Exercise 2 -->
+            <div class="exercise">
+                <div class="exercise-header">
+                    <div class="exercise-number">2</div>
+                    <div class="exercise-title">
+                        <h3>Research Phase</h3>
+                        <div class="time">15 minutes</div>
+                    </div>
+                </div>
+                <div class="exercise-content">
+                    <p>Read about your assigned improvement topic and understand what code you'll modify.</p>
+                    <ol>
+                        <li>Open the Research Topics page</li>
+                        <li>Click your topic tab (Learning Rate, Exploration, State Bins, or Reward Shaping)</li>
+                        <li>Read the explanation and code examples</li>
+                        <li>Decide which specific improvement you'll implement</li>
+                    </ol>
+
+                    <a href="research-topics.html" class="link-btn">Open Research Topics</a>
+                </div>
+            </div>
+
+            <!-- Exercise 3 -->
+            <div class="exercise">
+                <div class="exercise-header">
+                    <div class="exercise-number">3</div>
+                    <div class="exercise-title">
+                        <h3>Git Setup</h3>
+                        <div class="time">10 minutes</div>
+                    </div>
+                </div>
+                <div class="exercise-content">
+                    <p>Clone the classroom repository and create your feature branch.</p>
+
+                    <div class="code-block">
+                        <span class="comment"># Clone the repository (your instructor will provide the URL)</span>
+                        <span class="command">git</span> clone &lt;your-classroom-repo-url&gt;
+                        <span class="command">cd</span> w19d2-qlearning
+
+                        <span class="comment"># Switch to your team branch</span>
+                        <span class="command">git</span> checkout team-a  <span class="comment"># Replace with your team name</span>
+
+                        <span class="comment"># Create your feature branch</span>
+                        <span class="command">git</span> checkout -b feature/learning-rate  <span class="comment"># Use your improvement name</span>
+                    </div>
+
+                    <p><strong>Branch naming:</strong></p>
+                    <ul>
+                        <li><code>feature/learning-rate</code> - Learning rate improvements</li>
+                        <li><code>feature/exploration</code> - Exploration strategies</li>
+                        <li><code>feature/state-bins</code> - State representation</li>
+                        <li><code>feature/reward-shaping</code> - Reward shaping</li>
+                    </ul>
+
+                    <a href="github-workflow.html" class="link-btn">Git/GitHub Tutorial</a>
+                </div>
+            </div>
+
+            <!-- Exercise 4 -->
+            <div class="exercise">
+                <div class="exercise-header">
+                    <div class="exercise-number">4</div>
+                    <div class="exercise-title">
+                        <h3>Implementation</h3>
+                        <div class="time">30 minutes</div>
+                    </div>
+                </div>
+                <div class="exercise-content">
+                    <p>Implement your improvement in the starter code.</p>
+                    <ol>
+                        <li>Open <code>w19d2_starter.py</code> in your code editor</li>
+                        <li>Find your section marked with <code># ========== MODIFY HERE ==========</code></li>
+                        <li>Implement your improvement (refer to research-topics.html for code hints)</li>
+                        <li>Test your changes:</li>
+                    </ol>
+
+                    <div class="code-block">
+                        <span class="comment"># Run training to test your changes</span>
+                        <span class="command">python</span> w19d2_starter.py
+
+                        <span class="comment"># The script will:</span>
+                        <span class="comment"># 1. Auto-create a virtual environment</span>
+                        <span class="comment"># 2. Show a live training graph</span>
+                        <span class="comment"># 3. Run evaluation</span>
+                        <span class="comment"># 4. Generate results/report.html</span>
+                    </div>
+
+                    <p>Open <code>results/report.html</code> in your browser to see your results!</p>
+                </div>
+            </div>
+
+            <!-- Exercise 5 -->
+            <div class="exercise">
+                <div class="exercise-header">
+                    <div class="exercise-number">5</div>
+                    <div class="exercise-title">
+                        <h3>Evaluation & Commit</h3>
+                        <div class="time">10 minutes</div>
+                    </div>
+                </div>
+                <div class="exercise-content">
+                    <p>Record your evaluation score and commit your changes.</p>
+                    <ol>
+                        <li>Note your evaluation score from the report (Mean Score)</li>
+                        <li>Commit your changes with a descriptive message:</li>
+                    </ol>
+
+                    <div class="code-block">
+                        <span class="comment"># Stage your changes</span>
+                        <span class="command">git</span> add w19d2_starter.py
+
+                        <span class="comment"># Commit with a good message</span>
+                        <span class="command">git</span> commit -m "Add exponential learning rate decay"
+
+                        <span class="comment"># Push to GitHub</span>
+                        <span class="command">git</span> push -u origin feature/learning-rate
+                    </div>
+
+                    <div class="alert">
+                        <h4>Good Commit Messages</h4>
+                        <p>Start with a verb: "Add softmax exploration strategy", "Increase pole angle bins to 48", "Implement angle-based reward penalty"</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exercise 6 -->
+            <div class="exercise">
+                <div class="exercise-header">
+                    <div class="exercise-number">6</div>
+                    <div class="exercise-title">
+                        <h3>Create Pull Request</h3>
+                        <div class="time">10 minutes</div>
+                    </div>
+                </div>
+                <div class="exercise-content">
+                    <p>Create a Pull Request on GitHub to merge your changes into the team branch.</p>
+                    <ol>
+                        <li>Go to your repository on GitHub</li>
+                        <li>Click "Compare & pull request" (or Pull Requests > New)</li>
+                        <li>Set base branch to your <strong>team branch</strong> (e.g., <code>team-a</code>)</li>
+                        <li>Fill in the PR description with:</li>
+                    </ol>
+
+                    <div class="code-block">
+## Summary
+[Describe what you changed and why]
+
+## Changes Made
+- [List specific code changes]
+
+## Evaluation Results
+- Baseline: [score before your changes]
+- After change: [your evaluation score]
+
+## Testing
+- [x] Ran training with seed=42
+- [x] Completed 100-episode evaluation
+                    </div>
+
+                    <ol start="5">
+                        <li>Request review from a teammate</li>
+                        <li>Submit the PR</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Exercise 7 -->
+            <div class="exercise">
+                <div class="exercise-header">
+                    <div class="exercise-number">7</div>
+                    <div class="exercise-title">
+                        <h3>Code Review</h3>
+                        <div class="time">5 minutes</div>
+                    </div>
+                </div>
+                <div class="exercise-content">
+                    <p>Review one of your teammate's Pull Requests.</p>
+                    <ol>
+                        <li>Open a teammate's PR on GitHub</li>
+                        <li>Review the code changes (click "Files changed")</li>
+                        <li>Check their evaluation results</li>
+                        <li>Leave constructive feedback:</li>
+                    </ol>
+                    <ul>
+                        <li>Does the code make sense?</li>
+                        <li>Did it improve the score?</li>
+                        <li>Any suggestions for improvement?</li>
+                    </ul>
+                    <ol start="5">
+                        <li>Approve or Request Changes</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: Reference Links -->
+        <div class="section">
+            <h2>Section 4: Reference Materials</h2>
+            <p>Quick links to helpful resources from D1 and D2.</p>
+
+            <div class="reference-grid">
+                <a href="cartpole-explainer.html" class="reference-card">
+                    <h4>CartPole Environment</h4>
+                    <p>Interactive explainer for the CartPole simulation, observations, actions, and rewards.</p>
+                </a>
+                <a href="hyperparameters-explainer.html" class="reference-card">
+                    <h4>Hyperparameters Explained</h4>
+                    <p>Deep dive into learning rate, discount factor, epsilon, bins, and how to tune them.</p>
+                </a>
+                <a href="research-topics.html" class="reference-card">
+                    <h4>Research Topics</h4>
+                    <p>Detailed guides for each improvement area with code examples.</p>
+                </a>
+                <a href="github-workflow.html" class="reference-card">
+                    <h4>GitHub Workflow</h4>
+                    <p>Step-by-step Git tutorial: clone, branch, commit, push, PR, review.</p>
+                </a>
+                <a href="team-roles.html" class="reference-card">
+                    <h4>Team Roles</h4>
+                    <p>Role assignments and responsibilities for Runner, Maintainer, Analyst, Reviewer.</p>
+                </a>
+            </div>
+        </div>
+
+        <!-- Section 5: Help & Troubleshooting -->
+        <div class="section">
+            <h2>Section 5: Help & Troubleshooting</h2>
+
+            <div class="help-item">
+                <h4>Python not found or version error</h4>
+                <p>Make sure Python 3.8+ is installed. Try <code>python3 --version</code> or <code>python --version</code>.</p>
+            </div>
+
+            <div class="help-item">
+                <h4>Git command not found</h4>
+                <p>Install Git from <a href="https://git-scm.com/downloads" style="color: var(--primary);">git-scm.com</a>. Restart your terminal after installing.</p>
+            </div>
+
+            <div class="help-item">
+                <h4>Permission denied when pushing</h4>
+                <p>Make sure you've accepted the GitHub Classroom assignment and have access to the repo.</p>
+            </div>
+
+            <div class="help-item">
+                <h4>Matplotlib window not appearing</h4>
+                <p>The live graph requires a display. If using SSH/remote, add <code>--no-plot</code> flag: <code>python w19d2_starter.py --no-plot</code></p>
+            </div>
+
+            <div class="help-item">
+                <h4>Training scores are very low</h4>
+                <p>Check that your modification doesn't break the algorithm. Test with the original code first to establish a baseline.</p>
+            </div>
+
+            <div class="help-item">
+                <h4>Still stuck?</h4>
+                <p>Ask your teammates first, then raise your hand for instructor help!</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CartPole Environment Explainer</title>
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --primary-light: #34d399;
+            --secondary: #14b8a6;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #334155;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary) 100%);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+            display: inline-block;
+            margin-top: 1rem;
+        }
+
+        .nav-link:hover {
+            opacity: 1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .simulation-area {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .simulation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .simulation-header h2 {
+            color: var(--primary);
+        }
+
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        #cartpole-canvas {
+            background: linear-gradient(to bottom, #1a1a2e 0%, #16213e 100%);
+            border-radius: 8px;
+            border: 2px solid var(--border);
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-box {
+            background: var(--bg-dark);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .stat-value.danger {
+            color: var(--danger);
+        }
+
+        .stat-value.warning {
+            color: var(--warning);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .info-card h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .observation-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .observation-table th,
+        .observation-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .observation-table th {
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.85rem;
+        }
+
+        .observation-table td {
+            font-family: 'Consolas', monospace;
+        }
+
+        .obs-value {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--bg-dark);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .action-btn:hover {
+            border-color: var(--primary);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .action-btn.active {
+            border-color: var(--primary);
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .action-btn .arrow {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+
+        .action-btn .label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .termination-list {
+            list-style: none;
+        }
+
+        .termination-list li {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: var(--bg-dark);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .termination-list .icon {
+            font-size: 1.25rem;
+        }
+
+        .termination-list .condition {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .termination-list .detail {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .reward-box {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(20, 184, 166, 0.1) 100%);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .reward-box .amount {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .reward-box .description {
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .goal-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--primary);
+            text-align: center;
+        }
+
+        .goal-section h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .goal-section .goal-text {
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .goal-section .target {
+            margin-top: 1rem;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        .target strong {
+            color: var(--primary);
+        }
+
+        .tips-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .tips-section h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .tip {
+            background: var(--bg-dark);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .tip-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .tip-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .keyboard-hint {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .keyboard-hint kbd {
+            background: var(--bg-card-hover);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            font-family: monospace;
+            margin: 0 0.25rem;
+        }
+
+        .code-block {
+            background: var(--bg-dark);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .code-block .comment {
+            color: var(--text-muted);
+        }
+
+        .code-block .keyword {
+            color: var(--primary);
+        }
+
+        .code-block .string {
+            color: #f59e0b;
+        }
+
+        .code-block .number {
+            color: #8b5cf6;
+        }
+
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>CartPole Environment Explainer</h1>
+        <p>Understanding the classic reinforcement learning benchmark</p>
+        <a href="index.html" class="nav-link">&#8592; Back to Hub</a>
+    </header>
+
+    <div class="container">
+        <!-- Goal Section -->
+        <div class="goal-section">
+            <h2>&#127919; The Goal</h2>
+            <p class="goal-text">Balance a pole on a moving cart for as long as possible by applying forces to move the cart left or right.</p>
+            <p class="target">Solved when average reward reaches <strong>195+ over 100 episodes</strong> (or 500 for v1)</p>
+        </div>
+
+        <!-- Interactive Simulation -->
+        <div class="simulation-area">
+            <div class="simulation-header">
+                <h2>&#127918; Interactive Simulation</h2>
+                <div class="controls">
+                    <button class="btn btn-primary" onclick="resetSimulation()">Reset</button>
+                    <button class="btn btn-secondary" onclick="toggleAutoPlay()">Auto Balance</button>
+                    <button class="btn btn-danger" onclick="applyRandomForce()">Random Push</button>
+                </div>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="cartpole-canvas" width="600" height="300"></canvas>
+            </div>
+
+            <div class="stats-bar">
+                <div class="stat-box">
+                    <div class="stat-label">Episode Reward</div>
+                    <div class="stat-value" id="reward">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Cart Position</div>
+                    <div class="stat-value" id="cart-pos">0.00</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Pole Angle</div>
+                    <div class="stat-value" id="pole-angle">0.0&deg;</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Status</div>
+                    <div class="stat-value" id="status" style="font-size: 1rem;">Balanced</div>
+                </div>
+            </div>
+
+            <div class="keyboard-hint">
+                Use <kbd>&#8592;</kbd> and <kbd>&#8594;</kbd> arrow keys to control the cart, or click the buttons below
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-btn" id="left-btn" onclick="applyAction(0)">
+                    <div class="arrow">&#8592;</div>
+                    <div class="label">Push Left (Action 0)</div>
+                </button>
+                <button class="action-btn" id="right-btn" onclick="applyAction(1)">
+                    <div class="arrow">&#8594;</div>
+                    <div class="label">Push Right (Action 1)</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Info Grid -->
+        <div class="info-grid">
+            <!-- Observation Space -->
+            <div class="info-card">
+                <h3>&#128065; Observation Space (4D)</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem;">
+                    The agent receives 4 continuous values each timestep:
+                </p>
+                <table class="observation-table">
+                    <thead>
+                        <tr>
+                            <th>Index</th>
+                            <th>Observation</th>
+                            <th>Range</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>0</td>
+                            <td>Cart Position</td>
+                            <td class="obs-value">[-4.8, 4.8]</td>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>Cart Velocity</td>
+                            <td class="obs-value">[-Inf, Inf]</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>Pole Angle</td>
+                            <td class="obs-value">[-0.418, 0.418] rad</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>Pole Angular Velocity</td>
+                            <td class="obs-value">[-Inf, Inf]</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Action Space -->
+            <div class="info-card">
+                <h3>&#127918; Action Space (Discrete)</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem;">
+                    The agent can take one of 2 discrete actions:
+                </p>
+                <div style="display: grid; gap: 1rem;">
+                    <div style="background: var(--bg-dark); padding: 1rem; border-radius: 8px; display: flex; align-items: center; gap: 1rem;">
+                        <span style="font-size: 2rem; color: var(--primary);">&#8592;</span>
+                        <div>
+                            <div style="font-weight: 600;">Action 0: Push Left</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">Apply force to move cart left</div>
+                        </div>
+                    </div>
+                    <div style="background: var(--bg-dark); padding: 1rem; border-radius: 8px; display: flex; align-items: center; gap: 1rem;">
+                        <span style="font-size: 2rem; color: var(--primary);">&#8594;</span>
+                        <div>
+                            <div style="font-weight: 600;">Action 1: Push Right</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">Apply force to move cart right</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reward Structure -->
+            <div class="info-card">
+                <h3>&#127873; Reward Structure</h3>
+                <div class="reward-box">
+                    <div class="amount">+1</div>
+                    <div class="description">Every timestep the pole remains upright</div>
+                </div>
+                <p style="color: var(--text-secondary); margin-top: 1rem; font-size: 0.9rem;">
+                    <strong>Key insight:</strong> The reward is constant (+1) for each step of survival.
+                    The agent learns to maximize cumulative reward by keeping the pole balanced longer.
+                </p>
+            </div>
+
+            <!-- Termination Conditions -->
+            <div class="info-card">
+                <h3>&#128721; Episode Termination</h3>
+                <ul class="termination-list">
+                    <li>
+                        <span class="icon">&#128200;</span>
+                        <div>
+                            <div class="condition">Pole Angle Exceeds &plusmn;12&deg;</div>
+                            <div class="detail">Pole tilts more than 0.2095 radians from vertical</div>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">&#128679;</span>
+                        <div>
+                            <div class="condition">Cart Leaves Boundaries</div>
+                            <div class="detail">Cart position exceeds &plusmn;2.4 units from center</div>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">&#9989;</span>
+                        <div>
+                            <div class="condition">Maximum Steps Reached</div>
+                            <div class="detail">Episode truncated at 200 (v0) or 500 (v1) steps</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Tips Section -->
+        <div class="tips-section">
+            <h3>&#128161; Understanding CartPole for RL</h3>
+            <div class="tips-grid">
+                <div class="tip">
+                    <div class="tip-title">Why CartPole?</div>
+                    <div class="tip-text">Simple enough to train quickly, complex enough to require learning. Perfect for testing RL algorithms.</div>
+                </div>
+                <div class="tip">
+                    <div class="tip-title">Sparse vs Dense Rewards</div>
+                    <div class="tip-text">CartPole has dense rewards (+1 each step). Compare to sparse rewards where you only get reward at the end.</div>
+                </div>
+                <div class="tip">
+                    <div class="tip-title">Continuous Observations</div>
+                    <div class="tip-text">The 4D observation space is continuous, requiring function approximation (neural networks) to generalize.</div>
+                </div>
+                <div class="tip">
+                    <div class="tip-title">Discrete Actions</div>
+                    <div class="tip-text">Only 2 possible actions makes this simpler than continuous control tasks. Good starting point for RL.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Example -->
+        <div class="info-card">
+            <h3>&#128187; Code Example</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem;">
+                Basic CartPole interaction with Gymnasium:
+            </p>
+            <div class="code-block">
+<pre><span class="keyword">import</span> gymnasium <span class="keyword">as</span> gym
+
+<span class="comment"># Create environment</span>
+env = gym.make(<span class="string">"CartPole-v1"</span>, render_mode=<span class="string">"human"</span>)
+
+<span class="comment"># Reset and get initial observation</span>
+observation, info = env.reset()
+<span class="comment"># observation = [cart_pos, cart_vel, pole_angle, pole_vel]</span>
+
+<span class="keyword">for</span> _ <span class="keyword">in</span> range(<span class="number">1000</span>):
+    <span class="comment"># Take random action (0=left, 1=right)</span>
+    action = env.action_space.sample()
+
+    <span class="comment"># Step environment</span>
+    observation, reward, terminated, truncated, info = env.step(action)
+
+    <span class="keyword">if</span> terminated <span class="keyword">or</span> truncated:
+        observation, info = env.reset()
+
+env.close()</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CartPole Physics Simulation
+        const canvas = document.getElementById('cartpole-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Physics constants
+        const GRAVITY = 9.8;
+        const CART_MASS = 1.0;
+        const POLE_MASS = 0.1;
+        const POLE_LENGTH = 0.5;
+        const FORCE_MAG = 10.0;
+        const TAU = 0.02; // Time step
+
+        // State
+        let cartX = 0;
+        let cartVel = 0;
+        let poleAngle = 0;
+        let poleVel = 0;
+        let reward = 0;
+        let isTerminated = false;
+        let autoPlay = false;
+        let animationId = null;
+
+        // Scaling for canvas
+        const SCALE = 100;
+        const CART_WIDTH = 50;
+        const CART_HEIGHT = 30;
+        const POLE_RENDER_LENGTH = 100;
+
+        function resetSimulation() {
+            cartX = 0;
+            cartVel = 0;
+            poleAngle = (Math.random() - 0.5) * 0.1; // Small random angle
+            poleVel = 0;
+            reward = 0;
+            isTerminated = false;
+            updateDisplay();
+            draw();
+        }
+
+        function step(action) {
+            if (isTerminated) return;
+
+            const force = action === 1 ? FORCE_MAG : -FORCE_MAG;
+            const cosTheta = Math.cos(poleAngle);
+            const sinTheta = Math.sin(poleAngle);
+
+            const totalMass = CART_MASS + POLE_MASS;
+            const poleMassLength = POLE_MASS * POLE_LENGTH;
+
+            const temp = (force + poleMassLength * poleVel * poleVel * sinTheta) / totalMass;
+            const thetaAcc = (GRAVITY * sinTheta - cosTheta * temp) /
+                (POLE_LENGTH * (4/3 - POLE_MASS * cosTheta * cosTheta / totalMass));
+            const xAcc = temp - poleMassLength * thetaAcc * cosTheta / totalMass;
+
+            // Euler integration
+            cartX += TAU * cartVel;
+            cartVel += TAU * xAcc;
+            poleAngle += TAU * poleVel;
+            poleVel += TAU * thetaAcc;
+
+            reward += 1;
+
+            // Check termination
+            if (Math.abs(poleAngle) > 0.2095 || Math.abs(cartX) > 2.4) {
+                isTerminated = true;
+            }
+
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            document.getElementById('reward').textContent = reward;
+            document.getElementById('cart-pos').textContent = cartX.toFixed(2);
+            document.getElementById('pole-angle').textContent = (poleAngle * 180 / Math.PI).toFixed(1) + '\u00B0';
+
+            const statusEl = document.getElementById('status');
+            if (isTerminated) {
+                statusEl.textContent = 'Fallen!';
+                statusEl.className = 'stat-value danger';
+            } else if (Math.abs(poleAngle) > 0.15) {
+                statusEl.textContent = 'Tilting...';
+                statusEl.className = 'stat-value warning';
+            } else {
+                statusEl.textContent = 'Balanced';
+                statusEl.className = 'stat-value';
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw track
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(50, canvas.height - 40);
+            ctx.lineTo(canvas.width - 50, canvas.height - 40);
+            ctx.stroke();
+
+            // Draw boundaries
+            ctx.strokeStyle = '#ef4444';
+            ctx.setLineDash([5, 5]);
+            const leftBound = canvas.width/2 - 2.4 * SCALE;
+            const rightBound = canvas.width/2 + 2.4 * SCALE;
+            ctx.beginPath();
+            ctx.moveTo(leftBound, canvas.height - 60);
+            ctx.lineTo(leftBound, canvas.height - 20);
+            ctx.moveTo(rightBound, canvas.height - 60);
+            ctx.lineTo(rightBound, canvas.height - 20);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Cart position on canvas
+            const cartCanvasX = canvas.width/2 + cartX * SCALE;
+            const cartCanvasY = canvas.height - 40;
+
+            // Draw cart
+            ctx.fillStyle = isTerminated ? '#ef4444' : '#1e293b';
+            ctx.strokeStyle = isTerminated ? '#ef4444' : '#10b981';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(cartCanvasX - CART_WIDTH/2, cartCanvasY - CART_HEIGHT, CART_WIDTH, CART_HEIGHT, 5);
+            ctx.fill();
+            ctx.stroke();
+
+            // Draw wheels
+            ctx.fillStyle = '#64748b';
+            ctx.beginPath();
+            ctx.arc(cartCanvasX - 15, cartCanvasY, 8, 0, Math.PI * 2);
+            ctx.arc(cartCanvasX + 15, cartCanvasY, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw pole
+            const poleEndX = cartCanvasX + Math.sin(poleAngle) * POLE_RENDER_LENGTH;
+            const poleEndY = cartCanvasY - CART_HEIGHT - Math.cos(poleAngle) * POLE_RENDER_LENGTH;
+
+            // Pole color gradient based on angle
+            const angleRatio = Math.min(Math.abs(poleAngle) / 0.2095, 1);
+            const r = Math.floor(16 + (239 - 16) * angleRatio);
+            const g = Math.floor(185 - 100 * angleRatio);
+            const b = Math.floor(129 - 60 * angleRatio);
+
+            ctx.strokeStyle = `rgb(${r}, ${g}, ${b})`;
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(cartCanvasX, cartCanvasY - CART_HEIGHT);
+            ctx.lineTo(poleEndX, poleEndY);
+            ctx.stroke();
+
+            // Pole tip
+            ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+            ctx.beginPath();
+            ctx.arc(poleEndX, poleEndY, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw center marker
+            ctx.fillStyle = '#10b981';
+            ctx.beginPath();
+            ctx.arc(canvas.width/2, canvas.height - 40, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function applyAction(action) {
+            if (isTerminated) {
+                resetSimulation();
+                return;
+            }
+
+            // Visual feedback
+            const leftBtn = document.getElementById('left-btn');
+            const rightBtn = document.getElementById('right-btn');
+            leftBtn.classList.remove('active');
+            rightBtn.classList.remove('active');
+
+            if (action === 0) {
+                leftBtn.classList.add('active');
+            } else {
+                rightBtn.classList.add('active');
+            }
+
+            setTimeout(() => {
+                leftBtn.classList.remove('active');
+                rightBtn.classList.remove('active');
+            }, 100);
+
+            step(action);
+            draw();
+        }
+
+        function applyRandomForce() {
+            poleVel += (Math.random() - 0.5) * 2;
+            cartVel += (Math.random() - 0.5) * 2;
+        }
+
+        function toggleAutoPlay() {
+            autoPlay = !autoPlay;
+            if (autoPlay) {
+                runAutoPlay();
+            }
+        }
+
+        function runAutoPlay() {
+            if (!autoPlay) return;
+            if (isTerminated) {
+                resetSimulation();
+            }
+
+            // Simple policy: move in direction of pole tilt
+            const action = poleAngle > 0 ? 1 : 0;
+            step(action);
+            draw();
+
+            animationId = requestAnimationFrame(runAutoPlay);
+        }
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                applyAction(0);
+            } else if (e.key === 'ArrowRight') {
+                applyAction(1);
+            }
+        });
+
+        // Initialize
+        resetSimulation();
+        draw();
+
+        // Continuous physics update when not auto-playing
+        setInterval(() => {
+            if (!autoPlay && !isTerminated) {
+                // Apply small random perturbations
+                poleVel += (Math.random() - 0.5) * 0.01;
+
+                // Simple stabilization (like friction)
+                cartVel *= 0.99;
+                poleVel *= 0.99;
+
+                // Update position without force
+                poleAngle += TAU * poleVel;
+                cartX += TAU * cartVel;
+
+                // Check termination
+                if (Math.abs(poleAngle) > 0.2095 || Math.abs(cartX) > 2.4) {
+                    isTerminated = true;
+                }
+
+                updateDisplay();
+                draw();
+            }
+        }, 50);
+    </script>
+</body>
+</html>

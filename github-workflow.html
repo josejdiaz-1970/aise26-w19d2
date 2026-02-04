@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W19D2: GitHub Workflow Tutorial</title>
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --primary-light: #34d399;
+            --secondary: #3b82f6;
+            --purple: #8b5cf6;
+            --orange: #f59e0b;
+            --bg-dark: #111827;
+            --bg-card: #1f2937;
+            --bg-input: #374151;
+            --text-primary: #f9fafb;
+            --text-secondary: #9ca3af;
+            --border: #4b5563;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1rem;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .progress-bar {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--bg-input);
+            transform: translateY(-50%);
+            z-index: 0;
+        }
+
+        .progress-step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-input);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            z-index: 1;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .progress-step.active {
+            background: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .progress-step.completed {
+            background: var(--primary-dark);
+        }
+
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .progress-labels span {
+            text-align: center;
+            width: 80px;
+        }
+
+        /* Step Content */
+        .step-content {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .step-content.active {
+            display: block;
+        }
+
+        .step-content h2 {
+            color: var(--primary-light);
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .step-content h3 {
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            margin: 25px 0 15px;
+        }
+
+        .step-content p {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        /* Code blocks */
+        .code-block {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-block .label {
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            background: var(--bg-card);
+            padding: 0 8px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .code-block code {
+            color: var(--primary-light);
+        }
+
+        .code-block .comment {
+            color: var(--text-secondary);
+        }
+
+        .code-block .command {
+            color: var(--orange);
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--bg-input);
+            border: none;
+            color: var(--text-secondary);
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .copy-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Diagram */
+        .diagram {
+            background: var(--bg-dark);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .branch-diagram {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .branch-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .branch-node {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .branch-main {
+            background: var(--secondary);
+        }
+
+        .branch-team {
+            background: var(--purple);
+        }
+
+        .branch-feature {
+            background: var(--primary);
+        }
+
+        .branch-connector {
+            width: 30px;
+            height: 2px;
+            background: var(--border);
+        }
+
+        .branch-vertical {
+            width: 2px;
+            height: 30px;
+            background: var(--border);
+        }
+
+        /* Tips */
+        .tip {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .tip-title {
+            color: var(--primary-light);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .warning {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid #ef4444;
+        }
+
+        .warning .tip-title {
+            color: #ef4444;
+        }
+
+        /* Quiz */
+        .quiz {
+            background: var(--bg-input);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .quiz h4 {
+            color: var(--orange);
+            margin-bottom: 15px;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            background: var(--bg-dark);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quiz-option:hover {
+            background: var(--bg-card);
+        }
+
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid var(--primary);
+        }
+
+        .quiz-option.incorrect {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #ef4444;
+        }
+
+        .quiz-option input {
+            display: none;
+        }
+
+        .quiz-radio {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .quiz-option.correct .quiz-radio {
+            border-color: var(--primary);
+            background: var(--primary);
+        }
+
+        .quiz-feedback {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .quiz-feedback.show {
+            display: block;
+        }
+
+        /* Navigation */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Command Builder */
+        .command-builder {
+            background: var(--bg-input);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .command-builder h4 {
+            margin-bottom: 15px;
+            color: var(--orange);
+        }
+
+        .command-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            font-family: monospace;
+            font-size: 1rem;
+        }
+
+        .command-input span {
+            color: var(--text-secondary);
+        }
+
+        .command-input input {
+            background: var(--bg-dark);
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            padding: 8px 12px;
+            color: var(--primary-light);
+            font-family: monospace;
+            font-size: 1rem;
+            width: 200px;
+        }
+
+        .command-input input:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        .command-input input.correct {
+            border-color: var(--primary);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        /* Checklist */
+        .checklist {
+            list-style: none;
+        }
+
+        .checklist li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--bg-input);
+        }
+
+        .checklist input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary);
+        }
+
+        /* Back Link */
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">&larr; Back to Hub</a>
+
+        <header>
+            <h1>GitHub Workflow Tutorial</h1>
+            <p>Learn the complete Git/GitHub workflow for team collaboration</p>
+        </header>
+
+        <!-- Progress Bar -->
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-step active" data-step="1">1</div>
+                <div class="progress-step" data-step="2">2</div>
+                <div class="progress-step" data-step="3">3</div>
+                <div class="progress-step" data-step="4">4</div>
+                <div class="progress-step" data-step="5">5</div>
+                <div class="progress-step" data-step="6">6</div>
+                <div class="progress-step" data-step="7">7</div>
+            </div>
+            <div class="progress-labels">
+                <span>Setup</span>
+                <span>Branch</span>
+                <span>Changes</span>
+                <span>Commit</span>
+                <span>Push</span>
+                <span>PR</span>
+                <span>Review</span>
+            </div>
+        </div>
+
+        <!-- Step 1: Setup -->
+        <div class="step-content active" id="step1">
+            <h2>Step 1: Setup & Clone</h2>
+
+            <p>First, let's make sure you have Git installed and clone the repository.</p>
+
+            <h3>Check Git Installation</h3>
+            <div class="code-block">
+                <span class="label">Terminal</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="command">git</span> --version</code>
+            </div>
+            <p>You should see something like <code>git version 2.x.x</code></p>
+
+            <h3>Clone the Repository</h3>
+            <p>Your instructor will provide the repository URL. Clone it to your machine:</p>
+            <div class="code-block">
+                <span class="label">Terminal</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="command">git</span> clone https://github.com/YOUR-ORG/w19d2-qlearning.git</code>
+            </div>
+
+            <h3>Navigate to the Project</h3>
+            <div class="code-block">
+                <span class="label">Terminal</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="command">cd</span> w19d2-qlearning</code>
+            </div>
+
+            <div class="tip">
+                <div class="tip-title">Tip</div>
+                Open the folder in your code editor (VS Code, etc.) to see the project files.
+            </div>
+
+            <h3>Check Your Remotes</h3>
+            <div class="code-block">
+                <span class="label">Terminal</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="command">git</span> remote -v</code>
+            </div>
+            <p>You should see <code>origin</code> pointing to the GitHub repository.</p>
+
+            <div class="nav-buttons">
+                <button class="btn btn-outline" disabled>Previous</button>
+                <button class="btn btn-primary" onclick="nextStep()">Next: Create Branch &rarr;</button>
+            </div>
+        </div>
+
+        <!-- Step 2: Create Branch -->
+        <div class="step-content" id="step2">
+            <h2>Step 2: Create a Feature Branch</h2>
+
+            <p>Branches let you work on features without affecting the main code. Each team member creates their own feature branch.</p>
+
+            <h3>Branch Structure</h3>
+            <div class="diagram">
+                <div class="branch-diagram">
+                    <div class="branch-line">
+                        <span class="branch-node branch-main">main</span>
+                    </div>
+                    <div class="branch-vertical"></div>
+                    <div class="branch-line">
+                        <span class="branch-node branch-team">team-a</span>
+                    </div>
+                    <div class="branch-vertical"></div>
+                    <div class="branch-line">
+                        <span class="branch-node branch-feature">feature/learning-rate</span>
+                        <span class="branch-connector"></span>
+                        <span style="color: var(--text-secondary)">← You create this!</span>
+                    </div>
+                </div>
+            </div>
+
+            <h3>First, Switch to Your Team Branch</h3>
+            <p>Make sure you're on your team's branch first:</p>
+            <div class="code-block">
+                <span class="label">Terminal</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="command">git</span> checkout team-a  <span class="comment"># Replace with your team name</span></code>
+            </div>
+
+            <h3>Create Your Feature Branch</h3>
+            <p>Name your branch based on your improvement area:</p>
+            <div class="code-block">
+                <span class="label">Terminal</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="command">git</span> checkout -b feature/learning-rate  <span class="comment"># Your improvement</span></code>
+            </div>
+
+            <p>Branch naming conventions:</p>
+            <ul style="color: var(--text-secondary); margin-left: 20px; margin-bottom: 15px;">
+                <li><code>feature/learning-rate</code> - For learning rate improvements</li>
+                <li><code>feature/exploration</code> - For exploration strategies</li>
+                <li><code>feature/state-bins</code> - For state representation changes</li>
+                <li><code>feature/reward-shaping</code> - For reward shaping</li>
+            </ul>
+
+            <h3>Verify Your Branch</h3>
+            <div class="code-block">
+                <span class="label">Terminal</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="command">git</span> branch</code>
+            </div>
+            <p>The asterisk (*) shows your current branch.</p>
+
+            <!-- Command Builder -->
+            <div class="command-builder">
+                <h4>Practice: Build the Command</h4>
+                <div class="command-input">
+                    <span>git</span>
+                    <input type="text" id="cmd1" placeholder="checkout" onkeyup="checkCommand('cmd1', 'checkout')">
+                    <span>-b</span>
+                    <input type="text" id="cmd2" placeholder="feature/..." onkeyup="checkCommand('cmd2', 'feature/')">
+                </div>
+            </div>
+
+            <div class="warning">
+                <div class="tip-title">Warning</div>
+                Never work directly on <code>main</code> or your team branch. Always create a feature branch!
+            </div>
+
+            <div class="nav-buttons">
+                <button class="btn btn-outline" onclick="prevStep()">Previous</button>
+                <button class="btn btn-primary" onclick="nextStep()">Next: Make Changes &rarr;</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Make Changes -->
+        <div class="step-content" id="step3">
+            <h2>Step 3: Make Your Changes</h2>
+
+            <p>Now you'll edit <code>w19d2_starter.py</code> to implement your improvement.</p>
+
+            <h3>Open the File</h3>
+            <p>In your code editor, open <code>w19d2_starter.py</code>. Look for sections marked with:</p>
+            <div class="code-block">
+                <span class="label">Python</span>
+                <code><span class="comment"># ========== MODIFY HERE ==========</span></code>
+            </div>
+
+            <h3>Example: Learning Rate Strategy</h3>
+            <div class="code-block">
+                <span class="label">w19d2_starter.py</span>
+                <code>def get_learning_rate(self, state=None):
+    <span class="comment"># ========== MODIFY HERE: LEARNING RATE STRATEGY ==========</span>
+    <span class="comment"># Default: Fixed learning rate</span>
+
+    <span class="comment"># BEFORE: return self.learning_rate</span>
+
+    <span class="comment"># AFTER: Decay learning rate over time</span>
+    return self.learning_rate * (0.999 ** self.total_updates)</code>
+            </div>
+
+            <h3>Test Your Changes</h3>
+            <p>Run the script to train and see live graphs:</p>
+            <div class="code-block">
+                <span class="label">Terminal</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="command">python</span> w19d2_starter.py</code>
+            </div>
+            <p>The script auto-manages a virtual environment and shows a matplotlib training graph.</p>
+
+            <div class="tip">
+                <div class="tip-title">Best Practice</div>
+                Make small, incremental changes. Test after each change to see the effect.
+            </div>
+
+            <h3>Check What Changed</h3>
+            <div class="code-block">
+                <span class="label">Terminal</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="command">git</span> status</code>
+            </div>
+            <p>This shows which files have been modified.</p>
+
+            <div class="code-block">
+                <span class="label">Terminal</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="command">git</span> diff w19d2_starter.py</code>
+            </div>
+            <p>This shows the exact lines that changed.</p>
+
+            <div class="nav-buttons">
+                <button class="btn btn-outline" onclick="prevStep()">Previous</button>
+                <button class="btn btn-primary" onclick="nextStep()">Next: Commit &rarr;</button>
+            </div>
+        </div>
+
+        <!-- Step 4: Commit -->
+        <div class="step-content" id="step4">
+            <h2>Step 4: Stage and Commit</h2>
+
+            <p>A commit is a snapshot of your changes with a message describing what you did.</p>
+
+            <h3>Stage Your Changes</h3>
+            <p>Tell Git which files to include in the commit:</p>
+            <div class="code-block">
+                <span class="label">Terminal</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="command">git</span> add w19d2_starter.py</code>
+            </div>
+
+            <h3>Verify Staged Files</h3>
+            <div class="code-block">
+                <span class="label">Terminal</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="command">git</span> status</code>
+            </div>
+            <p>You should see your file listed under "Changes to be committed".</p>
+
+            <h3>Create the Commit</h3>
+            <div class="code-block">
+                <span class="label">Terminal</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="command">git</span> commit -m "Add adaptive learning rate decay"</code>
+            </div>
+
+            <h3>Good Commit Messages</h3>
+            <ul style="color: var(--text-secondary); margin-left: 20px; margin-bottom: 15px;">
+                <li><strong>Good:</strong> "Add exponential learning rate decay"</li>
+                <li><strong>Good:</strong> "Implement softmax exploration strategy"</li>
+                <li><strong>Good:</strong> "Increase pole angle bins from 24 to 48"</li>
+                <li><strong>Bad:</strong> "Fixed stuff"</li>
+                <li><strong>Bad:</strong> "Update w19d2_starter.py"</li>
+            </ul>
+
+            <div class="tip">
+                <div class="tip-title">Tip</div>
+                Start with a verb (Add, Fix, Update, Implement, Remove). Keep it under 50 characters.
+            </div>
+
+            <div class="nav-buttons">
+                <button class="btn btn-outline" onclick="prevStep()">Previous</button>
+                <button class="btn btn-primary" onclick="nextStep()">Next: Push &rarr;</button>
+            </div>
+        </div>
+
+        <!-- Step 5: Push -->
+        <div class="step-content" id="step5">
+            <h2>Step 5: Push to GitHub</h2>
+
+            <p>Now let's upload your branch to GitHub so others can see your work.</p>
+
+            <h3>Push Your Branch</h3>
+            <div class="code-block">
+                <span class="label">Terminal</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="command">git</span> push -u origin feature/learning-rate</code>
+            </div>
+            <p>The <code>-u</code> flag sets up tracking, so future pushes just need <code>git push</code>.</p>
+
+            <h3>Verify on GitHub</h3>
+            <p>Go to your repository on GitHub. You should see a message about your recently pushed branch:</p>
+            <div class="diagram" style="text-align: left; padding: 15px;">
+                <div style="background: var(--bg-input); padding: 15px; border-radius: 8px;">
+                    <span style="color: var(--text-secondary);">🔀</span>
+                    <span style="color: var(--primary-light); font-weight: bold;">feature/learning-rate</span>
+                    <span style="color: var(--text-secondary);"> had recent pushes less than a minute ago</span>
+                    <button style="float: right; background: var(--primary); color: white; border: none; padding: 5px 15px; border-radius: 4px;">Compare & pull request</button>
+                </div>
+            </div>
+
+            <div class="tip">
+                <div class="tip-title">What Just Happened?</div>
+                Your code is now on GitHub! Others can see your branch, but it's not merged yet.
+            </div>
+
+            <h3>Multiple Commits</h3>
+            <p>If you make more changes later, you can:</p>
+            <div class="code-block">
+                <span class="label">Terminal</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <code><span class="command">git</span> add w19d2_starter.py
+<span class="command">git</span> commit -m "Improve learning rate decay formula"
+<span class="command">git</span> push</code>
+            </div>
+
+            <div class="nav-buttons">
+                <button class="btn btn-outline" onclick="prevStep()">Previous</button>
+                <button class="btn btn-primary" onclick="nextStep()">Next: Pull Request &rarr;</button>
+            </div>
+        </div>
+
+        <!-- Step 6: Pull Request -->
+        <div class="step-content" id="step6">
+            <h2>Step 6: Create a Pull Request</h2>
+
+            <p>A Pull Request (PR) asks to merge your branch into the team branch. It's where code review happens.</p>
+
+            <h3>Create the PR on GitHub</h3>
+            <ol style="color: var(--text-secondary); margin-left: 20px; margin-bottom: 15px;">
+                <li>Click the "Compare & pull request" button (or go to Pull Requests → New)</li>
+                <li>Set the base branch to your <strong>team branch</strong> (e.g., <code>team-a</code>)</li>
+                <li>Set the compare branch to your <strong>feature branch</strong></li>
+                <li>Fill in the PR template</li>
+            </ol>
+
+            <h3>PR Title & Description</h3>
+            <div class="code-block">
+                <span class="label">PR Title</span>
+                <code>Add adaptive learning rate decay strategy</code>
+            </div>
+
+            <div class="code-block">
+                <span class="label">PR Description Template</span>
+                <code>## Summary
+Implemented exponential learning rate decay to improve convergence.
+
+## Changes Made
+- Modified `get_learning_rate()` in w19d2_starter.py
+- Learning rate now decays by 0.999 per update
+
+## Evaluation Results
+- Baseline: 180 ± 45
+- After change: 235 ± 52
+- Improvement: +30%
+
+## Testing
+- [x] Trained with seed=42, 500 episodes
+- [x] Ran 100-episode evaluation
+- [x] Exported Q-table as evidence</code>
+            </div>
+
+            <div class="tip">
+                <div class="tip-title">Always Include</div>
+                <ul style="color: var(--text-secondary); margin-left: 20px;">
+                    <li>What you changed and why</li>
+                    <li>Your evaluation results (before/after)</li>
+                    <li>How to test your changes</li>
+                </ul>
+            </div>
+
+            <h3>Request Reviewers</h3>
+            <p>Add your teammates as reviewers. They'll check your code before it can be merged.</p>
+
+            <div class="nav-buttons">
+                <button class="btn btn-outline" onclick="prevStep()">Previous</button>
+                <button class="btn btn-primary" onclick="nextStep()">Next: Code Review &rarr;</button>
+            </div>
+        </div>
+
+        <!-- Step 7: Code Review -->
+        <div class="step-content" id="step7">
+            <h2>Step 7: Code Review & Merge</h2>
+
+            <p>Code review ensures quality and shares knowledge across the team.</p>
+
+            <h3>As a Reviewer</h3>
+            <ul style="color: var(--text-secondary); margin-left: 20px; margin-bottom: 15px;">
+                <li><strong>Check the code</strong> - Does it make sense? Any bugs?</li>
+                <li><strong>Check the results</strong> - Did it improve performance?</li>
+                <li><strong>Leave comments</strong> - Suggest improvements or ask questions</li>
+                <li><strong>Approve or Request Changes</strong></li>
+            </ul>
+
+            <h3>Review Actions</h3>
+            <div class="diagram" style="text-align: left;">
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <div style="background: rgba(16, 185, 129, 0.2); padding: 15px; border-radius: 8px; flex: 1; min-width: 200px;">
+                        <div style="color: var(--primary); font-weight: bold; margin-bottom: 5px;">✓ Approve</div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Code looks good, ready to merge</div>
+                    </div>
+                    <div style="background: rgba(245, 158, 11, 0.2); padding: 15px; border-radius: 8px; flex: 1; min-width: 200px;">
+                        <div style="color: var(--orange); font-weight: bold; margin-bottom: 5px;">💬 Comment</div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Questions or suggestions, no decision</div>
+                    </div>
+                    <div style="background: rgba(239, 68, 68, 0.2); padding: 15px; border-radius: 8px; flex: 1; min-width: 200px;">
+                        <div style="color: #ef4444; font-weight: bold; margin-bottom: 5px;">✗ Request Changes</div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Issues that must be fixed before merge</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Responding to Feedback</h3>
+            <p>If reviewers request changes:</p>
+            <ol style="color: var(--text-secondary); margin-left: 20px; margin-bottom: 15px;">
+                <li>Make the requested changes locally</li>
+                <li>Commit and push (same branch)</li>
+                <li>Reply to comments explaining what you changed</li>
+                <li>Request re-review</li>
+            </ol>
+
+            <h3>Merging</h3>
+            <p>Once approved, click the "Merge pull request" button. Your code is now part of the team branch!</p>
+
+            <div class="tip">
+                <div class="tip-title">After Merging</div>
+                Update your local repository:
+                <div class="code-block" style="margin-top: 10px;">
+                    <code><span class="command">git</span> checkout team-a
+<span class="command">git</span> pull</code>
+                </div>
+            </div>
+
+            <h3>Completion Checklist</h3>
+            <ul class="checklist">
+                <li><input type="checkbox"> Cloned the repository</li>
+                <li><input type="checkbox"> Created feature branch</li>
+                <li><input type="checkbox"> Made changes to w19d2_starter.py</li>
+                <li><input type="checkbox"> Tested locally with evaluation</li>
+                <li><input type="checkbox"> Committed with good message</li>
+                <li><input type="checkbox"> Pushed to GitHub</li>
+                <li><input type="checkbox"> Created PR with results</li>
+                <li><input type="checkbox"> Reviewed teammate's PR</li>
+                <li><input type="checkbox"> Addressed review feedback</li>
+                <li><input type="checkbox"> Merged PR</li>
+            </ul>
+
+            <div class="nav-buttons">
+                <button class="btn btn-outline" onclick="prevStep()">Previous</button>
+                <button class="btn btn-primary" onclick="window.location.href='index.html'">Return to Hub</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 7;
+
+        function updateProgress() {
+            document.querySelectorAll('.progress-step').forEach((step, i) => {
+                step.classList.remove('active', 'completed');
+                if (i + 1 < currentStep) {
+                    step.classList.add('completed');
+                } else if (i + 1 === currentStep) {
+                    step.classList.add('active');
+                }
+            });
+
+            document.querySelectorAll('.step-content').forEach((content, i) => {
+                content.classList.remove('active');
+                if (i + 1 === currentStep) {
+                    content.classList.add('active');
+                }
+            });
+        }
+
+        function nextStep() {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                updateProgress();
+                window.scrollTo(0, 0);
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateProgress();
+                window.scrollTo(0, 0);
+            }
+        }
+
+        // Click on progress steps
+        document.querySelectorAll('.progress-step').forEach(step => {
+            step.addEventListener('click', () => {
+                currentStep = parseInt(step.dataset.step);
+                updateProgress();
+                window.scrollTo(0, 0);
+            });
+        });
+
+        // Quiz handling
+        function checkAnswer(element, correct) {
+            const options = element.parentElement.querySelectorAll('.quiz-option');
+            options.forEach(opt => opt.classList.remove('correct', 'incorrect'));
+
+            if (correct) {
+                element.classList.add('correct');
+            } else {
+                element.classList.add('incorrect');
+                // Find and highlight correct answer
+                options.forEach(opt => {
+                    if (opt.onclick.toString().includes('true')) {
+                        opt.classList.add('correct');
+                    }
+                });
+            }
+        }
+
+        // Command builder
+        function checkCommand(inputId, expected) {
+            const input = document.getElementById(inputId);
+            if (input.value.toLowerCase().startsWith(expected.toLowerCase())) {
+                input.classList.add('correct');
+            } else {
+                input.classList.remove('correct');
+            }
+        }
+
+        // Copy code
+        function copyCode(btn) {
+            const codeBlock = btn.parentElement;
+            const code = codeBlock.querySelector('code').innerText;
+            navigator.clipboard.writeText(code);
+            btn.textContent = 'Copied!';
+            setTimeout(() => btn.textContent = 'Copy', 2000);
+        }
+    </script>
+</body>
+</html>

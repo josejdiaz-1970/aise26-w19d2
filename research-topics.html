@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W19D2: Research Topics - Q-Learning Improvements</title>
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --primary-light: #34d399;
+            --secondary: #3b82f6;
+            --purple: #8b5cf6;
+            --orange: #f59e0b;
+            --pink: #ec4899;
+            --bg-dark: #111827;
+            --bg-card: #1f2937;
+            --bg-input: #374151;
+            --text-primary: #f9fafb;
+            --text-secondary: #9ca3af;
+            --border: #4b5563;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Back Link */
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            color: var(--primary);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 0;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            background: var(--bg-input);
+            border: none;
+            border-radius: 12px 12px 0 0;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .tab.tab-1.active { border-top: 3px solid var(--secondary); }
+        .tab.tab-2.active { border-top: 3px solid var(--purple); }
+        .tab.tab-3.active { border-top: 3px solid var(--orange); }
+        .tab.tab-4.active { border-top: 3px solid var(--pink); }
+
+        .tab-icon {
+            font-size: 1.2rem;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            background: var(--bg-card);
+            border-radius: 0 12px 12px 12px;
+            padding: 30px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .tab-content h2 {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tab-content.topic-1 h2 { color: var(--secondary); }
+        .tab-content.topic-2 h2 { color: var(--purple); }
+        .tab-content.topic-3 h2 { color: var(--orange); }
+        .tab-content.topic-4 h2 { color: var(--pink); }
+
+        .tab-content h3 {
+            color: var(--text-primary);
+            margin: 25px 0 15px;
+            font-size: 1.2rem;
+        }
+
+        .tab-content p {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        /* Code blocks */
+        .code-block {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+
+        .code-block .comment {
+            color: var(--text-secondary);
+        }
+
+        .code-block .keyword {
+            color: var(--purple);
+        }
+
+        .code-block .function {
+            color: var(--secondary);
+        }
+
+        .code-block .number {
+            color: var(--orange);
+        }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .card {
+            background: var(--bg-input);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .card h4 {
+            color: var(--primary-light);
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+
+        /* Experiment Ideas */
+        .experiment {
+            background: var(--bg-input);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .experiment h4 {
+            color: var(--orange);
+            margin-bottom: 10px;
+        }
+
+        .experiment ol,
+        .experiment ul {
+            color: var(--text-secondary);
+            margin-left: 20px;
+        }
+
+        /* Resources */
+        .resources {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+
+        .resources h4 {
+            color: var(--primary-light);
+            margin-bottom: 10px;
+        }
+
+        .resources a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .resources a:hover {
+            text-decoration: underline;
+        }
+
+        .resources ul {
+            margin-left: 20px;
+            color: var(--text-secondary);
+        }
+
+        /* Math/Formula */
+        .formula {
+            background: var(--bg-dark);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2rem;
+            margin: 15px 0;
+        }
+
+        .formula sub {
+            font-size: 0.8rem;
+        }
+
+        /* Warning */
+        .warning {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid #ef4444;
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+        }
+
+        .warning h4 {
+            color: #ef4444;
+            margin-bottom: 5px;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table th {
+            background: var(--bg-input);
+            color: var(--text-primary);
+        }
+
+        .comparison-table td {
+            color: var(--text-secondary);
+        }
+
+        .comparison-table code {
+            background: var(--bg-dark);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .badge-easy {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--primary);
+        }
+
+        .badge-medium {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--orange);
+        }
+
+        .badge-hard {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">&larr; Back to Hub</a>
+
+        <header>
+            <h1>Q-Learning Improvement Research</h1>
+            <p>Each team member picks one topic to research and implement</p>
+        </header>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab tab-1 active" onclick="showTab(1)">
+                <span class="tab-icon">📈</span> Learning Rate
+            </button>
+            <button class="tab tab-2" onclick="showTab(2)">
+                <span class="tab-icon">🔍</span> Exploration
+            </button>
+            <button class="tab tab-3" onclick="showTab(3)">
+                <span class="tab-icon">📊</span> State Representation
+            </button>
+            <button class="tab tab-4" onclick="showTab(4)">
+                <span class="tab-icon">🎯</span> Reward Shaping
+            </button>
+        </div>
+
+        <!-- Topic 1: Learning Rate -->
+        <div class="tab-content topic-1 active" id="topic1">
+            <h2><span class="tab-icon">📈</span> Learning Rate Strategies</h2>
+            <p><strong>Function to modify:</strong> <code>get_learning_rate()</code> in <code>w19d2_starter.py</code></p>
+
+            <h3>What is Learning Rate?</h3>
+            <p>The learning rate (α) controls how much new information overrides old information during Q-value updates.</p>
+
+            <div class="formula">
+                Q(s,a) ← Q(s,a) + <strong>α</strong> × [r + γ × max Q(s') - Q(s,a)]
+            </div>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>High Learning Rate (0.5-1.0)</h4>
+                    <p>Fast adaptation to new experiences. Risk: Unstable, may forget good policies.</p>
+                </div>
+                <div class="card">
+                    <h4>Low Learning Rate (0.01-0.1)</h4>
+                    <p>Stable, gradual learning. Risk: Slow convergence, may get stuck.</p>
+                </div>
+            </div>
+
+            <h3>Improvement Ideas</h3>
+
+            <div class="experiment">
+                <h4>1. Time-Based Decay <span class="badge badge-easy">Easy</span></h4>
+                <p>Start with high learning rate, decay over time:</p>
+                <div class="code-block">
+<span class="comment"># In get_learning_rate():</span>
+<span class="keyword">def</span> <span class="function">get_learning_rate</span>(self, state=<span class="keyword">None</span>):
+    <span class="keyword">return</span> self.learning_rate * (<span class="number">0.999</span> ** self.total_updates)
+                </div>
+                <ul>
+                    <li>Allows fast early learning, then stabilizes</li>
+                    <li>Try different decay factors: 0.999, 0.9995, 0.9999</li>
+                </ul>
+            </div>
+
+            <div class="experiment">
+                <h4>2. Per-State Learning Rate <span class="badge badge-medium">Medium</span></h4>
+                <p>Track visits to each state, decrease learning rate for frequently visited states:</p>
+                <div class="code-block">
+<span class="comment"># Add to __init__():</span>
+self.visit_counts = {}
+
+<span class="comment"># In get_learning_rate():</span>
+<span class="keyword">def</span> <span class="function">get_learning_rate</span>(self, state=<span class="keyword">None</span>):
+    <span class="keyword">if</span> state <span class="keyword">not in</span> self.visit_counts:
+        self.visit_counts[state] = <span class="number">0</span>
+    self.visit_counts[state] += <span class="number">1</span>
+    <span class="keyword">return</span> <span class="number">1.0</span> / self.visit_counts[state]
+                </div>
+                <ul>
+                    <li>Guarantees convergence (Robbins-Monro conditions)</li>
+                    <li>Well-studied states get smaller updates</li>
+                </ul>
+            </div>
+
+            <div class="experiment">
+                <h4>3. Scheduled Decay <span class="badge badge-easy">Easy</span></h4>
+                <p>Step-based decay at specific intervals:</p>
+                <div class="code-block">
+<span class="keyword">def</span> <span class="function">get_learning_rate</span>(self, state=<span class="keyword">None</span>):
+    episode = self.total_updates // <span class="number">500</span>
+    <span class="keyword">if</span> episode < <span class="number">100</span>: <span class="keyword">return</span> <span class="number">0.5</span>
+    <span class="keyword">if</span> episode < <span class="number">300</span>: <span class="keyword">return</span> <span class="number">0.2</span>
+    <span class="keyword">return</span> <span class="number">0.05</span>
+                </div>
+            </div>
+
+            <div class="resources">
+                <h4>Resources</h4>
+                <ul>
+                    <li><a href="http://incompleteideas.net/book/the-book.html" target="_blank">Sutton & Barto, Chapter 6</a> - Temporal-Difference Learning</li>
+                    <li><a href="https://en.wikipedia.org/wiki/Stochastic_approximation" target="_blank">Robbins-Monro Conditions</a> - Mathematical convergence guarantees</li>
+                </ul>
+            </div>
+
+            <div class="warning">
+                <h4>Pitfall to Avoid</h4>
+                <p>Don't decay the learning rate too quickly! If it reaches 0 too soon, the agent stops learning entirely.</p>
+            </div>
+        </div>
+
+        <!-- Topic 2: Exploration -->
+        <div class="tab-content topic-2" id="topic2">
+            <h2><span class="tab-icon">🔍</span> Exploration Strategies</h2>
+            <p><strong>Function to modify:</strong> <code>select_action()</code> in <code>w19d2_starter.py</code></p>
+
+            <h3>The Exploration-Exploitation Dilemma</h3>
+            <p>Should the agent try new things (explore) or stick with what works (exploit)?</p>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Too Much Exploration</h4>
+                    <p>Agent keeps trying random actions even when it knows good ones. Score never improves.</p>
+                </div>
+                <div class="card">
+                    <h4>Too Little Exploration</h4>
+                    <p>Agent gets stuck with suboptimal policy because it never discovers better actions.</p>
+                </div>
+            </div>
+
+            <h3>Improvement Ideas</h3>
+
+            <div class="experiment">
+                <h4>1. Boltzmann/Softmax Exploration <span class="badge badge-medium">Medium</span></h4>
+                <p>Instead of random exploration, choose actions probabilistically based on Q-values:</p>
+                <div class="code-block">
+<span class="keyword">def</span> <span class="function">select_action</span>(self, state, training=<span class="keyword">True</span>):
+    discrete_state = self.discretize(state)
+    q_values = self.q_table[discrete_state]
+
+    temperature = <span class="number">1.0</span>  <span class="comment"># Higher = more random</span>
+    exp_q = np.exp(q_values / temperature)
+    probs = exp_q / np.sum(exp_q)
+    <span class="keyword">return</span> np.random.choice([<span class="number">0</span>, <span class="number">1</span>], p=probs)
+                </div>
+                <ul>
+                    <li>Better actions more likely to be chosen</li>
+                    <li>Still explores, but prefers promising actions</li>
+                    <li>Try temperature values: 0.5, 1.0, 2.0</li>
+                </ul>
+            </div>
+
+            <div class="experiment">
+                <h4>2. Linear Epsilon Decay <span class="badge badge-easy">Easy</span></h4>
+                <p>Decay epsilon linearly instead of exponentially:</p>
+                <div class="code-block">
+<span class="comment"># Replace decay_epsilon() method:</span>
+<span class="keyword">def</span> <span class="function">decay_epsilon</span>(self, episode):
+    decay_steps = <span class="number">400</span>  <span class="comment"># Reach epsilon_end after this many episodes</span>
+    self.epsilon = max(
+        self.epsilon_end,
+        self.epsilon_start - (episode / decay_steps) * (self.epsilon_start - self.epsilon_end)
+    )
+                </div>
+            </div>
+
+            <div class="experiment">
+                <h4>3. UCB-like Exploration <span class="badge badge-hard">Hard</span></h4>
+                <p>Add exploration bonus for less-visited state-action pairs:</p>
+                <div class="code-block">
+<span class="comment"># Add to __init__(): self.action_counts = {}</span>
+
+<span class="keyword">def</span> <span class="function">select_action</span>(self, state, training=<span class="keyword">True</span>):
+    discrete_state = self.discretize(state)
+    q_values = self.q_table[discrete_state]
+
+    <span class="keyword">if</span> discrete_state <span class="keyword">not in</span> self.action_counts:
+        self.action_counts[discrete_state] = [<span class="number">0</span>, <span class="number">0</span>]
+
+    c = <span class="number">2.0</span>  <span class="comment"># Exploration coefficient</span>
+    total = sum(self.action_counts[discrete_state]) + <span class="number">1</span>
+
+    ucb = []
+    <span class="keyword">for</span> a <span class="keyword">in</span> [<span class="number">0</span>, <span class="number">1</span>]:
+        bonus = c * np.sqrt(np.log(total) / (self.action_counts[discrete_state][a] + <span class="number">1</span>))
+        ucb.append(q_values[a] + bonus)
+
+    <span class="keyword">return</span> np.argmax(ucb)
+                </div>
+            </div>
+
+            <div class="resources">
+                <h4>Resources</h4>
+                <ul>
+                    <li><a href="https://en.wikipedia.org/wiki/Multi-armed_bandit" target="_blank">Multi-Armed Bandit Problem</a> - Foundation of exploration strategies</li>
+                    <li><a href="https://lilianweng.github.io/posts/2018-01-23-multi-armed-bandit/" target="_blank">Lilian Weng's Bandit Blog</a> - Great overview of exploration methods</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Topic 3: State Representation -->
+        <div class="tab-content topic-3" id="topic3">
+            <h2><span class="tab-icon">📊</span> State Representation</h2>
+            <p><strong>Function to modify:</strong> <code>create_bins()</code> in <code>w19d2_starter.py</code></p>
+
+            <h3>Why Does Binning Matter?</h3>
+            <p>Q-Learning needs discrete states, but CartPole has continuous observations. How we discretize affects learning:</p>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Too Few Bins (4-6)</h4>
+                    <p>Can't distinguish between similar but important states. Poor precision.</p>
+                </div>
+                <div class="card">
+                    <h4>Too Many Bins (30+)</h4>
+                    <p>States rarely visited twice. Takes forever to learn.</p>
+                </div>
+            </div>
+
+            <h3>State Variables</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Variable</th>
+                        <th>Range</th>
+                        <th>Importance</th>
+                        <th>Default Bins</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Cart Position</td>
+                        <td>-2.4 to 2.4</td>
+                        <td>Low - cart can be anywhere</td>
+                        <td>12</td>
+                    </tr>
+                    <tr>
+                        <td>Cart Velocity</td>
+                        <td>-∞ to ∞ (clip to ±3)</td>
+                        <td>Medium</td>
+                        <td>12</td>
+                    </tr>
+                    <tr>
+                        <td>Pole Angle</td>
+                        <td>-0.21 to 0.21 rad</td>
+                        <td><strong>HIGH - most critical!</strong></td>
+                        <td>24</td>
+                    </tr>
+                    <tr>
+                        <td>Pole Velocity</td>
+                        <td>-∞ to ∞ (clip to ±3)</td>
+                        <td>High - predicts future angle</td>
+                        <td>12</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Improvement Ideas</h3>
+
+            <div class="experiment">
+                <h4>1. More Bins for Critical Variables <span class="badge badge-easy">Easy</span></h4>
+                <p>Give more precision to the most important variables:</p>
+                <div class="code-block">
+<span class="keyword">def</span> <span class="function">create_bins</span>(self):
+    <span class="keyword">return</span> {
+        <span class="string">"cart_pos"</span>: np.linspace(-<span class="number">2.4</span>, <span class="number">2.4</span>, <span class="number">8</span>),      <span class="comment"># Fewer bins (less important)</span>
+        <span class="string">"cart_vel"</span>: np.linspace(-<span class="number">3</span>, <span class="number">3</span>, <span class="number">12</span>),
+        <span class="string">"pole_angle"</span>: np.linspace(-<span class="number">0.21</span>, <span class="number">0.21</span>, <span class="number">48</span>),  <span class="comment"># More bins (critical!)</span>
+        <span class="string">"pole_vel"</span>: np.linspace(-<span class="number">3</span>, <span class="number">3</span>, <span class="number">24</span>),      <span class="comment"># More bins (important)</span>
+    }
+                </div>
+            </div>
+
+            <div class="experiment">
+                <h4>2. Non-Uniform Bins <span class="badge badge-medium">Medium</span></h4>
+                <p>Put more bins near zero (where precision matters most):</p>
+                <div class="code-block">
+<span class="keyword">def</span> <span class="function">create_bins</span>(self):
+    <span class="comment"># Non-uniform bins: more resolution near center</span>
+    pole_angle_bins = np.concatenate([
+        np.linspace(-<span class="number">0.21</span>, -<span class="number">0.05</span>, <span class="number">8</span>),
+        np.linspace(-<span class="number">0.05</span>, <span class="number">0.05</span>, <span class="number">16</span>),  <span class="comment"># Fine near zero</span>
+        np.linspace(<span class="number">0.05</span>, <span class="number">0.21</span>, <span class="number">8</span>)
+    ])
+
+    <span class="keyword">return</span> {
+        <span class="string">"cart_pos"</span>: np.linspace(-<span class="number">2.4</span>, <span class="number">2.4</span>, <span class="number">12</span>),
+        <span class="string">"cart_vel"</span>: np.linspace(-<span class="number">3</span>, <span class="number">3</span>, <span class="number">12</span>),
+        <span class="string">"pole_angle"</span>: pole_angle_bins,
+        <span class="string">"pole_vel"</span>: np.linspace(-<span class="number">3</span>, <span class="number">3</span>, <span class="number">12</span>),
+    }
+                </div>
+            </div>
+
+            <div class="experiment">
+                <h4>3. Ignore Cart Position <span class="badge badge-easy">Easy</span></h4>
+                <p>Some research suggests cart position doesn't matter much:</p>
+                <div class="code-block">
+<span class="keyword">def</span> <span class="function">discretize</span>(self, state):
+    cart_pos, cart_vel, pole_angle, pole_vel = state
+    <span class="comment"># Ignore cart position - use constant 0</span>
+    <span class="keyword">return</span> (
+        <span class="number">0</span>,  <span class="comment"># Always 0 for cart position</span>
+        np.digitize(cart_vel, self.bins[<span class="string">"cart_vel"</span>]),
+        np.digitize(pole_angle, self.bins[<span class="string">"pole_angle"</span>]),
+        np.digitize(pole_vel, self.bins[<span class="string">"pole_vel"</span>]),
+    )
+                </div>
+                <ul>
+                    <li>Reduces state space dramatically</li>
+                    <li>May work well for balancing but not edge-avoidance</li>
+                </ul>
+            </div>
+
+            <div class="resources">
+                <h4>Resources</h4>
+                <ul>
+                    <li><a href="https://gymnasium.farama.org/environments/classic_control/cart_pole/" target="_blank">CartPole Documentation</a> - Official state descriptions</li>
+                    <li><a href="http://incompleteideas.net/book/the-book.html" target="_blank">Sutton & Barto, Chapter 9</a> - Function approximation</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Topic 4: Reward Shaping -->
+        <div class="tab-content topic-4" id="topic4">
+            <h2><span class="tab-icon">🎯</span> Reward Shaping</h2>
+            <p><strong>Function to modify:</strong> <code>shape_reward()</code> in <code>w19d2_starter.py</code></p>
+
+            <h3>What is Reward Shaping?</h3>
+            <p>The environment gives +1 for every step. But we can add our own signals to guide learning faster:</p>
+
+            <div class="formula">
+                shaped_reward = base_reward + F(s, s')
+            </div>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Good Shaping</h4>
+                    <p>Provides hints about progress toward the goal without changing optimal policy.</p>
+                </div>
+                <div class="card">
+                    <h4>Bad Shaping</h4>
+                    <p>Changes what the agent optimizes for. May learn wrong behavior!</p>
+                </div>
+            </div>
+
+            <h3>Improvement Ideas</h3>
+
+            <div class="experiment">
+                <h4>1. Angle-Based Penalty <span class="badge badge-easy">Easy</span></h4>
+                <p>Penalize being far from upright:</p>
+                <div class="code-block">
+<span class="keyword">def</span> <span class="function">shape_reward</span>(self, base_reward, state, next_state, done):
+    angle_penalty = abs(state[<span class="number">2</span>]) * <span class="number">2</span>  <span class="comment"># state[2] is pole angle</span>
+    <span class="keyword">return</span> base_reward - angle_penalty
+                </div>
+                <ul>
+                    <li>Encourages keeping pole upright</li>
+                    <li>Try multipliers: 1, 2, 5, 10</li>
+                </ul>
+            </div>
+
+            <div class="experiment">
+                <h4>2. Velocity Penalty <span class="badge badge-easy">Easy</span></h4>
+                <p>Penalize fast movements (encourage smooth control):</p>
+                <div class="code-block">
+<span class="keyword">def</span> <span class="function">shape_reward</span>(self, base_reward, state, next_state, done):
+    vel_penalty = abs(state[<span class="number">1</span>]) * <span class="number">0.1</span> + abs(state[<span class="number">3</span>]) * <span class="number">0.1</span>
+    <span class="keyword">return</span> base_reward - vel_penalty
+                </div>
+            </div>
+
+            <div class="experiment">
+                <h4>3. Center Position Bonus <span class="badge badge-easy">Easy</span></h4>
+                <p>Reward staying near the center of the track:</p>
+                <div class="code-block">
+<span class="keyword">def</span> <span class="function">shape_reward</span>(self, base_reward, state, next_state, done):
+    pos_penalty = abs(state[<span class="number">0</span>]) * <span class="number">0.5</span>  <span class="comment"># state[0] is cart position</span>
+    <span class="keyword">return</span> base_reward - pos_penalty
+                </div>
+            </div>
+
+            <div class="experiment">
+                <h4>4. Potential-Based Shaping <span class="badge badge-hard">Hard</span></h4>
+                <p>Mathematically guaranteed to preserve optimal policy:</p>
+                <div class="code-block">
+<span class="keyword">def</span> <span class="function">potential</span>(self, state):
+    <span class="string">"""Higher when pole is more upright."""</span>
+    <span class="keyword">return</span> -abs(state[<span class="number">2</span>])  <span class="comment"># Negative absolute angle</span>
+
+<span class="keyword">def</span> <span class="function">shape_reward</span>(self, base_reward, state, next_state, done):
+    <span class="comment"># Shaping reward is difference in potentials</span>
+    F = self.discount_factor * self.potential(next_state) - self.potential(state)
+    <span class="keyword">return</span> base_reward + F
+                </div>
+                <ul>
+                    <li>Based on research by Andrew Ng</li>
+                    <li>Provably doesn't change optimal policy</li>
+                </ul>
+            </div>
+
+            <div class="warning">
+                <h4>Critical Warning</h4>
+                <p>Be careful with reward shaping! If your shaped rewards are mostly negative, Q-values become very negative and learning can fail. Always ensure rewards stay mostly positive or adjust the scale.</p>
+            </div>
+
+            <div class="resources">
+                <h4>Resources</h4>
+                <ul>
+                    <li><a href="https://people.eecs.berkeley.edu/~pabbeel/cs287-fa09/readings/NgHaradaRussell-shaping-ICML1999.pdf" target="_blank">Ng et al. 1999</a> - Policy Invariance Under Reward Transformations</li>
+                    <li><a href="https://arxiv.org/abs/1806.01946" target="_blank">Reward Shaping Survey</a> - Modern overview</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(n) {
+            // Hide all tabs
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            // Show selected tab
+            document.querySelector(`.tab-${n}`).classList.add('active');
+            document.getElementById(`topic${n}`).classList.add('active');
+        }
+    </script>
+</body>
+</html>
