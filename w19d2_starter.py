@@ -145,36 +145,23 @@ class QLearningAgent:
     # =========================================================================
     def create_bins(self):
         """
-        Create discretization bins for state variables.
-
-        MEMBER 3: Modify this function to improve state representation!
-
-        Ideas to try:
-          - Different number of bins (8, 16, 24)
-          - Non-uniform bins (finer near center)
-          - Different ranges for each variable
+        Improved state discretization for CartPole.
+        Focuses resolution on pole angle and angular velocity.
         """
-        # ========== MODIFY HERE: BINNING STRATEGY ==========
-        num_bins = self.num_bins
 
         return {
-            "cart_pos": np.linspace(-2.4, 2.4, num_bins),
-            "cart_vel": np.linspace(-3, 3, num_bins),
-            "pole_angle": np.linspace(-0.21, 0.21, num_bins * 2),  # Finer for angle
-            "pole_vel": np.linspace(-3, 3, num_bins),
-        }
+            # Cart position: coarse (not very important)
+            "cart_pos": np.linspace(-2.4, 2.4, 8),
 
-        # IDEAS:
-        # 1. More bins for critical variables:
-        #    "pole_angle": np.linspace(-0.21, 0.21, num_bins * 4),
-        #
-        # 2. Non-uniform bins (more resolution near zero):
-        #    angles = np.concatenate([
-        #        np.linspace(-0.21, -0.05, 8),
-        #        np.linspace(-0.05, 0.05, 16),
-        #        np.linspace(0.05, 0.21, 8)
-        #    ])
-        # =====================================================
+            # Cart velocity: very coarse
+            "cart_vel": np.linspace(-3.0, 3.0, 8),
+
+            # Pole angle: VERY IMPORTANT → high resolution near zero
+            "pole_angle": np.linspace(-0.21, 0.21, 18),
+
+            # Pole angular velocity: important but noisy
+            "pole_vel": np.linspace(-3.5, 3.5, 12),
+        }
 
     def discretize(self, state):
         """Convert continuous state to discrete bins."""
