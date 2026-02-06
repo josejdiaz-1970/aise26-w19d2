@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q-Learning Hyperparameters Explained</title>
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --secondary: #14b8a6;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #334155;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary) 100%);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header h1 { font-size: 2.2rem; margin-bottom: 0.5rem; }
+        .header p { opacity: 0.9; font-size: 1.1rem; }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+            display: inline-block;
+            margin-top: 1rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .intro-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .intro-card h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .param-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .param-nav a {
+            background: var(--bg-dark);
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .param-nav a:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .param-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .param-section h2 {
+            color: var(--primary);
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .param-section .greek {
+            font-family: 'Times New Roman', serif;
+            font-size: 2rem;
+            color: var(--secondary);
+        }
+
+        .param-section .subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .formula-box {
+            background: var(--bg-dark);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin: 1.5rem 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 1.1rem;
+            text-align: center;
+            border-left: 4px solid var(--primary);
+        }
+
+        .formula-box .highlight {
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .analogy-box {
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin: 1.5rem 0;
+            border-left: 4px solid var(--primary);
+        }
+
+        .analogy-box h4 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .analogy-box p {
+            color: var(--text-secondary);
+        }
+
+        .effects-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        @media (max-width: 600px) {
+            .effects-grid { grid-template-columns: 1fr; }
+        }
+
+        .effect-card {
+            background: var(--bg-dark);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .effect-card.high {
+            border-left: 4px solid var(--warning);
+        }
+
+        .effect-card.low {
+            border-left: 4px solid var(--info);
+        }
+
+        .effect-card h5 {
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .effect-card.high h5 { color: var(--warning); }
+        .effect-card.low h5 { color: var(--info); }
+
+        .effect-card ul {
+            margin-left: 1.25rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .effect-card li { margin-bottom: 0.25rem; }
+
+        .recommendation {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid var(--success);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .recommendation h4 {
+            color: var(--success);
+            margin-bottom: 0.5rem;
+        }
+
+        .recommendation code {
+            background: var(--bg-dark);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            color: var(--primary);
+        }
+
+        .visual-demo {
+            background: var(--bg-dark);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .visual-demo h4 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+
+        .slider-demo {
+            margin-bottom: 1rem;
+        }
+
+        .slider-demo input[type="range"] {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: var(--bg-card);
+            border-radius: 4px;
+            margin: 0.5rem 0;
+        }
+
+        .slider-demo input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .demo-output {
+            background: var(--bg-card);
+            border-radius: 6px;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        .progress-bar {
+            height: 24px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 12px;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .epsilon-visual {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+
+        .epsilon-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            font-size: 0.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .epsilon-box.explore { background: var(--warning); }
+        .epsilon-box.exploit { background: var(--primary); }
+
+        .bin-visual {
+            display: flex;
+            gap: 2px;
+            margin: 1rem 0;
+        }
+
+        .bin {
+            flex: 1;
+            height: 40px;
+            background: var(--bg-card);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .bin.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+            margin: 1.5rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: var(--bg-dark);
+            border-radius: 8px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.75rem;
+            top: 1rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary);
+        }
+
+        .timeline-item .episode {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .code-block {
+            background: #1a1a2e;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .number { color: #b5cea8; }
+        .code-block .string { color: #ce9178; }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+
+        .summary-table th, .summary-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .summary-table th {
+            background: var(--bg-dark);
+            color: var(--primary);
+        }
+
+        .summary-table td {
+            color: var(--text-secondary);
+        }
+
+        .summary-table code {
+            background: var(--bg-dark);
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Q-Learning Hyperparameters</h1>
+        <p>Understanding what each parameter does and how to tune it</p>
+        <a href="index.html" class="nav-link">&#8592; Back to Hub</a>
+    </header>
+
+    <div class="container">
+        <!-- Introduction -->
+        <div class="intro-card">
+            <h2>What are Hyperparameters?</h2>
+            <p>
+                Hyperparameters are settings you choose <strong>before</strong> training starts.
+                Unlike regular parameters (like Q-values) which the agent learns, hyperparameters
+                control <em>how</em> the agent learns.
+            </p>
+            <p style="margin-top: 1rem; color: var(--text-secondary);">
+                Think of it like learning to cook: the recipe ingredients are parameters,
+                but the oven temperature and cooking time are hyperparameters.
+            </p>
+
+            <div class="param-nav">
+                <a href="#learning-rate">Learning Rate</a>
+                <a href="#discount-factor">Discount Factor</a>
+                <a href="#epsilon">Epsilon (Exploration)</a>
+                <a href="#episodes">Episodes</a>
+                <a href="#bins">Bins</a>
+            </div>
+        </div>
+
+        <!-- Learning Rate -->
+        <div class="param-section" id="learning-rate">
+            <h2><span class="greek">&#945;</span> Learning Rate (Alpha)</h2>
+            <p class="subtitle">How much to update Q-values after each experience</p>
+
+            <p>
+                The learning rate controls how quickly the agent updates its beliefs (Q-values)
+                based on new experiences. It determines the step size when moving toward the target.
+            </p>
+
+            <div class="formula-box">
+                Q(s,a) = Q(s,a) + <span class="highlight">&#945;</span> × (target - Q(s,a))
+            </div>
+
+            <p>
+                If the target is 10 and current Q-value is 0:
+            </p>
+            <ul style="margin: 1rem 0 1rem 1.5rem; color: var(--text-secondary);">
+                <li><strong>&#945; = 0.1:</strong> New Q = 0 + 0.1 × 10 = <strong>1.0</strong> (small step)</li>
+                <li><strong>&#945; = 0.5:</strong> New Q = 0 + 0.5 × 10 = <strong>5.0</strong> (medium step)</li>
+                <li><strong>&#945; = 1.0:</strong> New Q = 0 + 1.0 × 10 = <strong>10.0</strong> (replace entirely)</li>
+            </ul>
+
+            <div class="analogy-box">
+                <h4>&#128161; Analogy: Learning to Shoot Baskets</h4>
+                <p>
+                    Imagine learning to shoot baskets. Each shot gives you feedback.
+                    <br><br>
+                    <strong>High learning rate (&#945; = 0.9):</strong> You completely change your technique after each shot.
+                    You might overcorrect and be inconsistent.
+                    <br><br>
+                    <strong>Low learning rate (&#945; = 0.1):</strong> You make tiny adjustments after each shot.
+                    More stable, but takes longer to improve.
+                </p>
+            </div>
+
+            <div class="effects-grid">
+                <div class="effect-card high">
+                    <h5>&#9650; Too High (> 0.5)</h5>
+                    <ul>
+                        <li>Learns fast initially</li>
+                        <li>Unstable, erratic behavior</li>
+                        <li>Forgets old experiences quickly</li>
+                        <li>May never converge</li>
+                    </ul>
+                </div>
+                <div class="effect-card low">
+                    <h5>&#9660; Too Low (< 0.05)</h5>
+                    <ul>
+                        <li>Very stable learning</li>
+                        <li>Extremely slow progress</li>
+                        <li>May get stuck in bad patterns</li>
+                        <li>Needs many more episodes</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="visual-demo">
+                <h4>Interactive Demo: See How Learning Rate Affects Updates</h4>
+                <div class="slider-demo">
+                    <label>Learning Rate (&#945;): <strong id="lr-value">0.2</strong></label>
+                    <input type="range" id="lr-slider" min="0.01" max="1" step="0.01" value="0.2" oninput="updateLRDemo()">
+                    <div class="slider-labels">
+                        <span>0.01 (slow)</span>
+                        <span>1.0 (fast)</span>
+                    </div>
+                </div>
+                <div class="demo-output">
+                    <div>Current Q(s,a) = 0</div>
+                    <div>Target = 10</div>
+                    <div style="margin-top: 0.5rem; color: var(--primary);" id="lr-result">
+                        After update: Q(s,a) = 2.0
+                    </div>
+                    <div class="progress-bar" style="margin-top: 0.5rem;">
+                        <div class="progress-fill" id="lr-progress" style="width: 20%;">20%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recommendation">
+                <h4>&#9989; Recommended for CartPole</h4>
+                <p>Start with <code>learning_rate = 0.1</code> to <code>0.3</code></p>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                    CartPole is relatively simple, so moderate learning rates work well.
+                    If scores are unstable, try lowering it.
+                </p>
+            </div>
+        </div>
+
+        <!-- Discount Factor -->
+        <div class="param-section" id="discount-factor">
+            <h2><span class="greek">&#947;</span> Discount Factor (Gamma)</h2>
+            <p class="subtitle">How much to value future rewards vs immediate rewards</p>
+
+            <p>
+                The discount factor determines how "far-sighted" or "short-sighted" the agent is.
+                It multiplies future rewards, making them worth less than immediate rewards.
+            </p>
+
+            <div class="formula-box">
+                target = reward + <span class="highlight">&#947;</span> × max(Q(next_state))
+            </div>
+
+            <p>
+                Total value of a sequence of rewards [1, 1, 1, 1, 1]:
+            </p>
+            <ul style="margin: 1rem 0 1rem 1.5rem; color: var(--text-secondary);">
+                <li><strong>&#947; = 0.5:</strong> 1 + 0.5 + 0.25 + 0.125 + 0.0625 = <strong>1.94</strong></li>
+                <li><strong>&#947; = 0.9:</strong> 1 + 0.9 + 0.81 + 0.73 + 0.66 = <strong>4.10</strong></li>
+                <li><strong>&#947; = 0.99:</strong> 1 + 0.99 + 0.98 + 0.97 + 0.96 = <strong>4.90</strong></li>
+            </ul>
+
+            <div class="analogy-box">
+                <h4>&#128161; Analogy: Saving Money</h4>
+                <p>
+                    Would you rather have $100 today or $100 next year?
+                    <br><br>
+                    <strong>High gamma (&#947; = 0.99):</strong> "$100 next year is almost as good as $100 today.
+                    I'll save for retirement."
+                    <br><br>
+                    <strong>Low gamma (&#947; = 0.5):</strong> "$100 next year is only worth $50 to me today.
+                    I want instant gratification!"
+                </p>
+            </div>
+
+            <div class="effects-grid">
+                <div class="effect-card high">
+                    <h5>&#9650; High (0.99 - 0.999)</h5>
+                    <ul>
+                        <li>Plans far into the future</li>
+                        <li>Willing to sacrifice now for later</li>
+                        <li>Good for long episodes</li>
+                        <li>Can be slower to learn</li>
+                    </ul>
+                </div>
+                <div class="effect-card low">
+                    <h5>&#9660; Low (< 0.9)</h5>
+                    <ul>
+                        <li>Focuses on immediate rewards</li>
+                        <li>Ignores long-term consequences</li>
+                        <li>May make short-sighted choices</li>
+                        <li>Faster but suboptimal</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="visual-demo">
+                <h4>Reward Horizon: How Far Ahead Does the Agent "See"?</h4>
+                <div class="slider-demo">
+                    <label>Discount Factor (&#947;): <strong id="gamma-value">0.99</strong></label>
+                    <input type="range" id="gamma-slider" min="0.5" max="0.999" step="0.001" value="0.99" oninput="updateGammaDemo()">
+                    <div class="slider-labels">
+                        <span>0.5 (short-sighted)</span>
+                        <span>0.999 (far-sighted)</span>
+                    </div>
+                </div>
+                <div class="demo-output" id="gamma-output">
+                    <div>Value of reward at each future step:</div>
+                    <div style="margin-top: 0.5rem; font-family: monospace;">
+                        Now: 1.00 → +1: 0.99 → +2: 0.98 → +3: 0.97 → +4: 0.96 → +5: 0.95
+                    </div>
+                    <div style="margin-top: 0.5rem; color: var(--primary);">
+                        Effective horizon: ~100 steps (where value drops below 0.5)
+                    </div>
+                </div>
+            </div>
+
+            <div class="recommendation">
+                <h4>&#9989; Recommended for CartPole</h4>
+                <p>Use <code>discount_factor = 0.99</code></p>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                    CartPole episodes can last up to 500 steps. High gamma helps the agent
+                    understand that keeping the pole balanced NOW leads to more rewards LATER.
+                </p>
+            </div>
+        </div>
+
+        <!-- Epsilon -->
+        <div class="param-section" id="epsilon">
+            <h2><span class="greek">&#949;</span> Epsilon (Exploration Rate)</h2>
+            <p class="subtitle">The explore vs exploit tradeoff</p>
+
+            <p>
+                Epsilon controls how often the agent <strong>explores</strong> (tries random actions)
+                vs <strong>exploits</strong> (uses what it already knows). This is one of the most
+                important concepts in reinforcement learning!
+            </p>
+
+            <div class="formula-box">
+                if random() < <span class="highlight">&#949;</span>: action = random
+                <br>
+                else: action = best_known
+            </div>
+
+            <div class="analogy-box">
+                <h4>&#128161; Analogy: Choosing a Restaurant</h4>
+                <p>
+                    <strong>Explore (&#949; = 1.0):</strong> "I'll try a random restaurant every time.
+                    I might find something amazing... or terrible."
+                    <br><br>
+                    <strong>Exploit (&#949; = 0.0):</strong> "I'll always go to my favorite restaurant.
+                    Safe, but I'll never discover somewhere better."
+                    <br><br>
+                    <strong>Balanced (&#949; = 0.1):</strong> "I'll usually go to my favorite, but
+                    occasionally try somewhere new."
+                </p>
+            </div>
+
+            <h3 style="margin-top: 2rem; color: var(--text-primary);">The Three Epsilon Parameters</h3>
+
+            <div style="margin: 1.5rem 0;">
+                <h4 style="color: var(--secondary);">1. Epsilon Start</h4>
+                <p style="color: var(--text-secondary);">
+                    How much to explore at the beginning. Usually <strong>1.0</strong> (100% random)
+                    because the agent knows nothing yet.
+                </p>
+            </div>
+
+            <div style="margin: 1.5rem 0;">
+                <h4 style="color: var(--secondary);">2. Epsilon End</h4>
+                <p style="color: var(--text-secondary);">
+                    Minimum exploration rate. Usually <strong>0.01</strong> (1% random) to occasionally
+                    try new things even after learning.
+                </p>
+            </div>
+
+            <div style="margin: 1.5rem 0;">
+                <h4 style="color: var(--secondary);">3. Epsilon Decay</h4>
+                <p style="color: var(--text-secondary);">
+                    How fast epsilon decreases. After each episode:
+                    <code>epsilon = epsilon × decay</code>
+                </p>
+            </div>
+
+            <div class="visual-demo">
+                <h4>Epsilon Decay Over Episodes</h4>
+                <div class="slider-demo">
+                    <label>Decay Rate: <strong id="decay-value">0.99</strong></label>
+                    <input type="range" id="decay-slider" min="0.95" max="0.999" step="0.001" value="0.99" oninput="updateEpsilonDemo()">
+                    <div class="slider-labels">
+                        <span>0.95 (fast decay)</span>
+                        <span>0.999 (slow decay)</span>
+                    </div>
+                </div>
+                <div class="demo-output">
+                    <div id="epsilon-timeline"></div>
+                </div>
+
+                <h4 style="margin-top: 1.5rem;">Explore vs Exploit at Episode 100</h4>
+                <div id="epsilon-visual" class="epsilon-visual"></div>
+                <div style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">
+                    <span style="color: var(--warning);">&#9632;</span> Explore (random) &nbsp;
+                    <span style="color: var(--primary);">&#9632;</span> Exploit (best known)
+                </div>
+            </div>
+
+            <div class="effects-grid">
+                <div class="effect-card high">
+                    <h5>&#9650; Decay Too Fast (0.95)</h5>
+                    <ul>
+                        <li>Stops exploring quickly</li>
+                        <li>May miss good strategies</li>
+                        <li>Gets stuck in local optima</li>
+                        <li>&#949; &#8776; 0.01 after ~90 episodes</li>
+                    </ul>
+                </div>
+                <div class="effect-card low">
+                    <h5>&#9660; Decay Too Slow (0.999)</h5>
+                    <ul>
+                        <li>Explores for a long time</li>
+                        <li>Slow to use what it learned</li>
+                        <li>Wastes episodes on random actions</li>
+                        <li>&#949; &#8776; 0.37 after 1000 episodes</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="recommendation">
+                <h4>&#9989; Recommended for CartPole</h4>
+                <p>
+                    <code>epsilon_start = 1.0</code>,
+                    <code>epsilon_end = 0.01</code>,
+                    <code>epsilon_decay = 0.99</code>
+                </p>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                    With decay=0.99, epsilon reaches ~0.01 after about 450 episodes.
+                    This gives time to explore early, then exploit later.
+                </p>
+            </div>
+        </div>
+
+        <!-- Episodes -->
+        <div class="param-section" id="episodes">
+            <h2>&#128257; Number of Episodes</h2>
+            <p class="subtitle">How many times to play the game during training</p>
+
+            <p>
+                An <strong>episode</strong> is one complete game from start to finish.
+                In CartPole, an episode ends when the pole falls or you reach 500 steps.
+            </p>
+
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="episode">Episode 1-50</div>
+                    <div style="color: var(--text-secondary);">
+                        Mostly random exploration. Agent learns basic patterns.
+                        Scores: ~15-30
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="episode">Episode 50-200</div>
+                    <div style="color: var(--text-secondary);">
+                        Starting to learn. Mix of exploration and exploitation.
+                        Scores: ~30-100
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="episode">Episode 200-500</div>
+                    <div style="color: var(--text-secondary);">
+                        More exploitation. Refining strategy.
+                        Scores: ~50-200+
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="episode">Episode 500+</div>
+                    <div style="color: var(--text-secondary);">
+                        Fine-tuning. May reach peak performance.
+                        Scores: ~100-500
+                    </div>
+                </div>
+            </div>
+
+            <div class="effects-grid">
+                <div class="effect-card high">
+                    <h5>&#9650; More Episodes (1000+)</h5>
+                    <ul>
+                        <li>More time to learn</li>
+                        <li>Better final performance</li>
+                        <li>Takes longer to run</li>
+                        <li>Diminishing returns eventually</li>
+                    </ul>
+                </div>
+                <div class="effect-card low">
+                    <h5>&#9660; Fewer Episodes (100-200)</h5>
+                    <ul>
+                        <li>Quick experiments</li>
+                        <li>May not fully converge</li>
+                        <li>Good for testing settings</li>
+                        <li>Won't reach peak performance</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="recommendation">
+                <h4>&#9989; Recommended for CartPole</h4>
+                <p>Use <code>num_episodes = 500</code> for standard training</p>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                    500 episodes is usually enough to see significant learning.
+                    Use 100-200 for quick tests, 1000+ for best results.
+                </p>
+            </div>
+        </div>
+
+        <!-- Bins -->
+        <div class="param-section" id="bins">
+            <h2>&#128230; State Discretization Bins</h2>
+            <p class="subtitle">Converting continuous states to discrete buckets</p>
+
+            <p>
+                Q-Learning needs <strong>discrete</strong> states (like squares on a chess board),
+                but CartPole has <strong>continuous</strong> states (any decimal number).
+                We solve this by dividing the range into "bins" (buckets).
+            </p>
+
+            <div class="visual-demo">
+                <h4>Example: Pole Angle (-12° to +12°)</h4>
+
+                <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+                    With <strong>8 bins</strong>, each bin covers 3 degrees:
+                </p>
+                <div class="bin-visual" id="bins-visual-8">
+                    <div class="bin">-12°<br>-9°</div>
+                    <div class="bin">-9°<br>-6°</div>
+                    <div class="bin">-6°<br>-3°</div>
+                    <div class="bin">-3°<br>0°</div>
+                    <div class="bin active">0°<br>+3°</div>
+                    <div class="bin">+3°<br>+6°</div>
+                    <div class="bin">+6°<br>+9°</div>
+                    <div class="bin">+9°<br>+12°</div>
+                </div>
+
+                <p style="margin: 1.5rem 0 1rem; color: var(--text-secondary);">
+                    With <strong>24 bins</strong>, each bin covers 1 degree:
+                </p>
+                <div class="bin-visual" id="bins-visual-24" style="font-size: 0.6rem;">
+                    <div class="bin" style="padding: 2px;">-12</div>
+                    <div class="bin" style="padding: 2px;">-11</div>
+                    <div class="bin" style="padding: 2px;">-10</div>
+                    <div class="bin" style="padding: 2px;">-9</div>
+                    <div class="bin" style="padding: 2px;">-8</div>
+                    <div class="bin" style="padding: 2px;">-7</div>
+                    <div class="bin" style="padding: 2px;">-6</div>
+                    <div class="bin" style="padding: 2px;">-5</div>
+                    <div class="bin" style="padding: 2px;">-4</div>
+                    <div class="bin" style="padding: 2px;">-3</div>
+                    <div class="bin" style="padding: 2px;">-2</div>
+                    <div class="bin" style="padding: 2px;">-1</div>
+                    <div class="bin active" style="padding: 2px;">0</div>
+                    <div class="bin active" style="padding: 2px;">+1</div>
+                    <div class="bin" style="padding: 2px;">+2</div>
+                    <div class="bin" style="padding: 2px;">+3</div>
+                    <div class="bin" style="padding: 2px;">+4</div>
+                    <div class="bin" style="padding: 2px;">+5</div>
+                    <div class="bin" style="padding: 2px;">+6</div>
+                    <div class="bin" style="padding: 2px;">+7</div>
+                    <div class="bin" style="padding: 2px;">+8</div>
+                    <div class="bin" style="padding: 2px;">+9</div>
+                    <div class="bin" style="padding: 2px;">+10</div>
+                    <div class="bin" style="padding: 2px;">+11</div>
+                </div>
+
+                <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                    More bins = finer distinctions between angles, but more states to learn
+                </p>
+            </div>
+
+            <div class="analogy-box">
+                <h4>&#128161; Analogy: Thermostat Settings</h4>
+                <p>
+                    <strong>Few bins (coarse):</strong> Thermostat has only "Cold", "Medium", "Hot".
+                    Simple, but can't distinguish between 68°F and 72°F.
+                    <br><br>
+                    <strong>Many bins (fine):</strong> Thermostat shows exact temperature.
+                    More precise, but takes longer to learn the right setting for each degree.
+                </p>
+            </div>
+
+            <h3 style="margin-top: 2rem; color: var(--text-primary);">Total Number of States</h3>
+            <p style="color: var(--text-secondary);">
+                CartPole has 4 observations. Total possible states = bins<sup>4</sup>
+                (pole angle uses 2× bins for finer resolution)
+            </p>
+
+            <table class="summary-table">
+                <tr>
+                    <th>Bins Setting</th>
+                    <th>Total States</th>
+                    <th>Learning Speed</th>
+                    <th>Precision</th>
+                </tr>
+                <tr>
+                    <td><code>8</code></td>
+                    <td>~8,192</td>
+                    <td>Fast</td>
+                    <td>Coarse</td>
+                </tr>
+                <tr>
+                    <td><code>12</code></td>
+                    <td>~41,472</td>
+                    <td>Medium</td>
+                    <td>Medium</td>
+                </tr>
+                <tr>
+                    <td><code>16</code></td>
+                    <td>~131,072</td>
+                    <td>Slow</td>
+                    <td>Fine</td>
+                </tr>
+                <tr>
+                    <td><code>24</code></td>
+                    <td>~663,552</td>
+                    <td>Very Slow</td>
+                    <td>Very Fine</td>
+                </tr>
+            </table>
+
+            <div class="effects-grid">
+                <div class="effect-card high">
+                    <h5>&#9650; More Bins (16-24)</h5>
+                    <ul>
+                        <li>Finer state distinctions</li>
+                        <li>Potentially better final policy</li>
+                        <li>Many more states to visit</li>
+                        <li>Needs more episodes</li>
+                    </ul>
+                </div>
+                <div class="effect-card low">
+                    <h5>&#9660; Fewer Bins (8)</h5>
+                    <ul>
+                        <li>Coarse state distinctions</li>
+                        <li>Faster learning (fewer states)</li>
+                        <li>May lose important detail</li>
+                        <li>Good for quick experiments</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="recommendation">
+                <h4>&#9989; Recommended for CartPole</h4>
+                <p>Use <code>num_bins = 12</code> for balanced learning</p>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                    12 bins provides good precision without exploding the state space.
+                    Use 8 for quick tests, 16-24 for best results with more episodes.
+                </p>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="intro-card" style="margin-top: 2rem;">
+            <h2>&#128203; Quick Reference</h2>
+            <table class="summary-table">
+                <tr>
+                    <th>Parameter</th>
+                    <th>Symbol</th>
+                    <th>Range</th>
+                    <th>Default</th>
+                    <th>Effect</th>
+                </tr>
+                <tr>
+                    <td>Learning Rate</td>
+                    <td>&#945;</td>
+                    <td>0.01 - 1.0</td>
+                    <td><code>0.2</code></td>
+                    <td>How fast to update Q-values</td>
+                </tr>
+                <tr>
+                    <td>Discount Factor</td>
+                    <td>&#947;</td>
+                    <td>0.8 - 0.999</td>
+                    <td><code>0.99</code></td>
+                    <td>How much to value future rewards</td>
+                </tr>
+                <tr>
+                    <td>Epsilon Start</td>
+                    <td>&#949;<sub>0</sub></td>
+                    <td>0 - 1.0</td>
+                    <td><code>1.0</code></td>
+                    <td>Initial exploration rate</td>
+                </tr>
+                <tr>
+                    <td>Epsilon End</td>
+                    <td>&#949;<sub>min</sub></td>
+                    <td>0 - 0.2</td>
+                    <td><code>0.01</code></td>
+                    <td>Minimum exploration rate</td>
+                </tr>
+                <tr>
+                    <td>Epsilon Decay</td>
+                    <td>-</td>
+                    <td>0.95 - 0.999</td>
+                    <td><code>0.99</code></td>
+                    <td>How fast exploration decreases</td>
+                </tr>
+                <tr>
+                    <td>Episodes</td>
+                    <td>-</td>
+                    <td>100 - 2000</td>
+                    <td><code>500</code></td>
+                    <td>Training duration</td>
+                </tr>
+                <tr>
+                    <td>Bins</td>
+                    <td>-</td>
+                    <td>8 - 24</td>
+                    <td><code>12</code></td>
+                    <td>State space resolution</td>
+                </tr>
+            </table>
+
+            <div style="margin-top: 1.5rem; text-align: center;">
+                <a href="config-submission.html" style="
+                    display: inline-block;
+                    background: var(--primary);
+                    color: white;
+                    padding: 1rem 2rem;
+                    border-radius: 8px;
+                    text-decoration: none;
+                    font-weight: 500;
+                    margin-right: 1rem;
+                ">Build Your Config &#8594;</a>
+                <a href="vanilla_starter.py" download style="
+                    display: inline-block;
+                    background: var(--bg-card-hover);
+                    color: var(--text-primary);
+                    padding: 1rem 2rem;
+                    border-radius: 8px;
+                    text-decoration: none;
+                    font-weight: 500;
+                    border: 1px solid var(--border);
+                ">Download Starter Code</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Learning Rate Demo
+        function updateLRDemo() {
+            const lr = parseFloat(document.getElementById('lr-slider').value);
+            document.getElementById('lr-value').textContent = lr.toFixed(2);
+
+            const currentQ = 0;
+            const target = 10;
+            const newQ = currentQ + lr * (target - currentQ);
+            const percent = (newQ / target) * 100;
+
+            document.getElementById('lr-result').textContent = `After update: Q(s,a) = ${newQ.toFixed(1)}`;
+            document.getElementById('lr-progress').style.width = `${percent}%`;
+            document.getElementById('lr-progress').textContent = `${percent.toFixed(0)}%`;
+        }
+
+        // Gamma Demo
+        function updateGammaDemo() {
+            const gamma = parseFloat(document.getElementById('gamma-slider').value);
+            document.getElementById('gamma-value').textContent = gamma.toFixed(3);
+
+            let values = [];
+            let val = 1;
+            for (let i = 0; i <= 5; i++) {
+                values.push(val.toFixed(2));
+                val *= gamma;
+            }
+
+            // Calculate effective horizon (where value drops below 0.5)
+            let horizon = Math.ceil(Math.log(0.5) / Math.log(gamma));
+
+            document.getElementById('gamma-output').innerHTML = `
+                <div>Value of reward at each future step:</div>
+                <div style="margin-top: 0.5rem; font-family: monospace;">
+                    Now: ${values[0]} → +1: ${values[1]} → +2: ${values[2]} → +3: ${values[3]} → +4: ${values[4]} → +5: ${values[5]}
+                </div>
+                <div style="margin-top: 0.5rem; color: var(--primary);">
+                    Effective horizon: ~${horizon} steps (where value drops below 0.5)
+                </div>
+            `;
+        }
+
+        // Epsilon Demo
+        function updateEpsilonDemo() {
+            const decay = parseFloat(document.getElementById('decay-slider').value);
+            document.getElementById('decay-value').textContent = decay.toFixed(3);
+
+            // Calculate epsilon at various episodes
+            let timeline = '';
+            let eps = 1.0;
+            const checkpoints = [1, 50, 100, 200, 500];
+
+            for (let e = 1; e <= 500; e++) {
+                if (checkpoints.includes(e)) {
+                    timeline += `Episode ${e}: ε = ${eps.toFixed(3)} (${(eps * 100).toFixed(0)}% random)<br>`;
+                }
+                eps = Math.max(0.01, eps * decay);
+            }
+
+            document.getElementById('epsilon-timeline').innerHTML = timeline;
+
+            // Visual at episode 100
+            eps = 1.0;
+            for (let e = 1; e <= 100; e++) {
+                eps = Math.max(0.01, eps * decay);
+            }
+
+            let visual = '';
+            for (let i = 0; i < 50; i++) {
+                const isExplore = Math.random() < eps;
+                visual += `<div class="epsilon-box ${isExplore ? 'explore' : 'exploit'}"></div>`;
+            }
+            document.getElementById('epsilon-visual').innerHTML = visual;
+        }
+
+        // Initialize demos
+        updateLRDemo();
+        updateGammaDemo();
+        updateEpsilonDemo();
+    </script>
+</body>
+</html>

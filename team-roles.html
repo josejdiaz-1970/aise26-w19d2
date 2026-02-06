@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Role Assigner</title>
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --secondary: #14b8a6;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #334155;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --runner: #3b82f6;
+            --maintainer: #8b5cf6;
+            --analyst: #f59e0b;
+            --reviewer: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary) 100%);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+            display: inline-block;
+            margin-top: 1rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .intro {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .intro h2 { color: var(--primary); margin-bottom: 0.75rem; }
+        .intro p { color: var(--text-secondary); }
+
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .role-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        .role-card.runner { border-color: var(--runner); }
+        .role-card.maintainer { border-color: var(--maintainer); }
+        .role-card.analyst { border-color: var(--analyst); }
+        .role-card.reviewer { border-color: var(--reviewer); }
+
+        .role-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .role-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .runner .role-icon { background: rgba(59, 130, 246, 0.2); }
+        .maintainer .role-icon { background: rgba(139, 92, 246, 0.2); }
+        .analyst .role-icon { background: rgba(245, 158, 11, 0.2); }
+        .reviewer .role-icon { background: rgba(239, 68, 68, 0.2); }
+
+        .role-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .runner .role-title { color: var(--runner); }
+        .maintainer .role-title { color: var(--maintainer); }
+        .analyst .role-title { color: var(--analyst); }
+        .reviewer .role-title { color: var(--reviewer); }
+
+        .role-tagline {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .role-description {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .responsibilities {
+            list-style: none;
+        }
+
+        .responsibilities li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .responsibilities li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.85rem;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .runner .responsibilities li::before { background: var(--runner); }
+        .maintainer .responsibilities li::before { background: var(--maintainer); }
+        .analyst .responsibilities li::before { background: var(--analyst); }
+        .reviewer .responsibilities li::before { background: var(--reviewer); }
+
+        .assignment-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .assignment-section h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .team-input {
+            margin-bottom: 1.5rem;
+        }
+
+        .team-input label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .team-input input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .assignment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .assignment-item {
+            background: var(--bg-dark);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 3px solid;
+        }
+
+        .assignment-item.runner { border-left-color: var(--runner); }
+        .assignment-item.maintainer { border-left-color: var(--maintainer); }
+        .assignment-item.analyst { border-left-color: var(--analyst); }
+        .assignment-item.reviewer { border-left-color: var(--reviewer); }
+
+        .assignment-item label {
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .assignment-item.runner label { color: var(--runner); }
+        .assignment-item.maintainer label { color: var(--maintainer); }
+        .assignment-item.analyst label { color: var(--analyst); }
+        .assignment-item.reviewer label { color: var(--reviewer); }
+
+        .assignment-item input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .checklist-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .checklist-section h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .role-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .role-tab {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            background: var(--bg-dark);
+            color: var(--text-secondary);
+        }
+
+        .role-tab.active {
+            color: white;
+        }
+
+        .role-tab.runner.active { background: var(--runner); }
+        .role-tab.maintainer.active { background: var(--maintainer); }
+        .role-tab.analyst.active { background: var(--analyst); }
+        .role-tab.reviewer.active { background: var(--reviewer); }
+
+        .checklist-content {
+            display: none;
+        }
+
+        .checklist-content.active {
+            display: block;
+        }
+
+        .checklist {
+            list-style: none;
+        }
+
+        .checklist li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .checklist input[type="checkbox"] {
+            margin-top: 0.25rem;
+            accent-color: var(--primary);
+        }
+
+        .checklist-text {
+            flex: 1;
+        }
+
+        .checklist-text strong {
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .checklist-text span {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .output-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--primary);
+        }
+
+        .output-section h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .output-preview {
+            background: var(--bg-dark);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .success-message {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .roles-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Team Role Assigner</h1>
+        <p>Define responsibilities for your AutoML team</p>
+        <a href="index.html" class="nav-link">&#8592; Back to Hub</a>
+    </header>
+
+    <div class="container">
+        <div class="intro">
+            <h2>&#128101; Why Defined Roles?</h2>
+            <p>Clear role definitions prevent duplication of effort, ensure accountability, and help teams work efficiently. Each role has specific responsibilities that contribute to the project's success.</p>
+        </div>
+
+        <!-- Role Descriptions -->
+        <div class="roles-grid">
+            <div class="role-card runner">
+                <div class="role-header">
+                    <div class="role-icon">&#127939;</div>
+                    <div>
+                        <div class="role-title">Runner</div>
+                        <div class="role-tagline">Executes experiments</div>
+                    </div>
+                </div>
+                <p class="role-description">The Runner is responsible for executing training scripts, monitoring progress, and ensuring experiments complete successfully.</p>
+                <ul class="responsibilities">
+                    <li>Execute training scripts</li>
+                    <li>Monitor TensorBoard logs</li>
+                    <li>Report progress to team</li>
+                    <li>Troubleshoot runtime issues</li>
+                    <li>Save and organize artifacts</li>
+                </ul>
+            </div>
+
+            <div class="role-card maintainer">
+                <div class="role-header">
+                    <div class="role-icon">&#128736;</div>
+                    <div>
+                        <div class="role-title">Maintainer</div>
+                        <div class="role-tagline">Manages the repository</div>
+                    </div>
+                </div>
+                <p class="role-description">The Maintainer manages the Git repository, handles merges, ensures code quality, and maintains documentation.</p>
+                <ul class="responsibilities">
+                    <li>Manage Git branches</li>
+                    <li>Review and merge PRs</li>
+                    <li>Maintain README and docs</li>
+                    <li>Resolve merge conflicts</li>
+                    <li>Tag releases</li>
+                </ul>
+            </div>
+
+            <div class="role-card analyst">
+                <div class="role-header">
+                    <div class="role-icon">&#128202;</div>
+                    <div>
+                        <div class="role-title">Analyst</div>
+                        <div class="role-tagline">Interprets results</div>
+                    </div>
+                </div>
+                <p class="role-description">The Analyst interprets experiment results, creates visualizations, and provides insights to guide the team's decisions.</p>
+                <ul class="responsibilities">
+                    <li>Analyze training metrics</li>
+                    <li>Create result visualizations</li>
+                    <li>Compare experiment runs</li>
+                    <li>Identify trends and issues</li>
+                    <li>Write results summary</li>
+                </ul>
+            </div>
+
+            <div class="role-card reviewer">
+                <div class="role-header">
+                    <div class="role-icon">&#128270;</div>
+                    <div>
+                        <div class="role-title">Reviewer</div>
+                        <div class="role-tagline">Ensures quality</div>
+                    </div>
+                </div>
+                <p class="role-description">The Reviewer ensures code quality, validates results, and provides constructive feedback on all team deliverables.</p>
+                <ul class="responsibilities">
+                    <li>Review code changes</li>
+                    <li>Validate experiment results</li>
+                    <li>Check documentation accuracy</li>
+                    <li>Provide constructive feedback</li>
+                    <li>Approve PRs</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Role Assignment -->
+        <div class="assignment-section">
+            <h3>&#128221; Assign Team Members</h3>
+            <div class="team-input">
+                <label for="team-name">Team Name</label>
+                <input type="text" id="team-name" placeholder="e.g., Team Alpha" oninput="updatePreview()">
+            </div>
+            <div class="assignment-grid">
+                <div class="assignment-item runner">
+                    <label>&#127939; Runner</label>
+                    <input type="text" id="runner-name" placeholder="Team member name" oninput="updatePreview()">
+                </div>
+                <div class="assignment-item maintainer">
+                    <label>&#128736; Maintainer</label>
+                    <input type="text" id="maintainer-name" placeholder="Team member name" oninput="updatePreview()">
+                </div>
+                <div class="assignment-item analyst">
+                    <label>&#128202; Analyst</label>
+                    <input type="text" id="analyst-name" placeholder="Team member name" oninput="updatePreview()">
+                </div>
+                <div class="assignment-item reviewer">
+                    <label>&#128270; Reviewer</label>
+                    <input type="text" id="reviewer-name" placeholder="Team member name" oninput="updatePreview()">
+                </div>
+            </div>
+        </div>
+
+        <!-- Checklists -->
+        <div class="checklist-section">
+            <h3>&#9989; Role Checklists</h3>
+            <div class="role-tabs">
+                <button class="role-tab runner active" onclick="showChecklist('runner')">Runner</button>
+                <button class="role-tab maintainer" onclick="showChecklist('maintainer')">Maintainer</button>
+                <button class="role-tab analyst" onclick="showChecklist('analyst')">Analyst</button>
+                <button class="role-tab reviewer" onclick="showChecklist('reviewer')">Reviewer</button>
+            </div>
+
+            <div id="runner-checklist" class="checklist-content active">
+                <ul class="checklist">
+                    <li>
+                        <input type="checkbox">
+                        <div class="checklist-text">
+                            <strong>Set up execution environment</strong>
+                            <span>Install dependencies, configure hardware (MPS/CUDA)</span>
+                        </div>
+                    </li>
+                    <li>
+                        <input type="checkbox">
+                        <div class="checklist-text">
+                            <strong>Run baseline experiment</strong>
+                            <span>Execute training with default parameters</span>
+                        </div>
+                    </li>
+                    <li>
+                        <input type="checkbox">
+                        <div class="checklist-text">
+                            <strong>Monitor training progress</strong>
+                            <span>Check TensorBoard, watch for errors</span>
+                        </div>
+                    </li>
+                    <li>
+                        <input type="checkbox">
+                        <div class="checklist-text">
+                            <strong>Run HPO experiments</strong>
+                            <span>Execute Optuna trials, track results</span>
+                        </div>
+                    </li>
+                    <li>
+                        <input type="checkbox">
+                        <div class="checklist-text">
+                            <strong>Save artifacts</strong>
+                            <span>Export models, logs, and configs to designated location</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div id="maintainer-checklist" class="checklist-content">
+                <ul class="checklist">
+                    <li>
+                        <input type="checkbox">
+                        <div class="checklist-text">
+                            <strong>Initialize repository</strong>
+                            <span>Create repo, set up branch protection</span>
+                        </div>
+                    </li>
+                    <li>
+                        <input type="checkbox">
+                        <div class="checklist-text">
+                            <strong>Create README.md</strong>
+                            <span>Document project setup and usage</span>
+                        </div>
+                    </li>
+                    <li>
+                        <input type="checkbox">
+                        <div class="checklist-text">
+                            <strong>Set up directory structure</strong>
+                            <span>Create configs/, results/, docs/ folders</span>
+                        </div>
+                    </li>
+                    <li>
+                        <input type="checkbox">
+                        <div class="checklist-text">
+                            <strong>Review and merge PRs</strong>
+                            <span>Ensure code quality before merging</span>
+                        </div>
+                    </li>
+                    <li>
+                        <input type="checkbox">
+                        <div class="checklist-text">
+                            <strong>Tag final release</strong>
+                            <span>Create version tag for submission</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div id="analyst-checklist" class="checklist-content">
+                <ul class="checklist">
+                    <li>
+                        <input type="checkbox">
+                        <div class="checklist-text">
+                            <strong>Set up metrics tracking</strong>
+                            <span>Define what to measure and how</span>
+                        </div>
+                    </li>
+                    <li>
+                        <input type="checkbox">
+                        <div class="checklist-text">
+                            <strong>Analyze baseline results</strong>
+                            <span>Document initial performance</span>
+                        </div>
+                    </li>
+                    <li>
+                        <input type="checkbox">
+                        <div class="checklist-text">
+                            <strong>Compare HPO trials</strong>
+                            <span>Identify best hyperparameters</span>
+                        </div>
+                    </li>
+                    <li>
+                        <input type="checkbox">
+                        <div class="checklist-text">
+                            <strong>Create visualizations</strong>
+                            <span>Training curves, comparison plots</span>
+                        </div>
+                    </li>
+                    <li>
+                        <input type="checkbox">
+                        <div class="checklist-text">
+                            <strong>Write results summary</strong>
+                            <span>Document findings and recommendations</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div id="reviewer-checklist" class="checklist-content">
+                <ul class="checklist">
+                    <li>
+                        <input type="checkbox">
+                        <div class="checklist-text">
+                            <strong>Review eval protocol</strong>
+                            <span>Ensure methodology is sound</span>
+                        </div>
+                    </li>
+                    <li>
+                        <input type="checkbox">
+                        <div class="checklist-text">
+                            <strong>Review code PRs</strong>
+                            <span>Check for bugs, style, best practices</span>
+                        </div>
+                    </li>
+                    <li>
+                        <input type="checkbox">
+                        <div class="checklist-text">
+                            <strong>Validate results</strong>
+                            <span>Verify metrics are correctly computed</span>
+                        </div>
+                    </li>
+                    <li>
+                        <input type="checkbox">
+                        <div class="checklist-text">
+                            <strong>Check documentation</strong>
+                            <span>Ensure README and runbook are accurate</span>
+                        </div>
+                    </li>
+                    <li>
+                        <input type="checkbox">
+                        <div class="checklist-text">
+                            <strong>Final approval</strong>
+                            <span>Sign off on submission readiness</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Output -->
+        <div class="output-section">
+            <h3>&#128196; Team Roster</h3>
+            <div class="output-preview" id="output-preview"></div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="copyToClipboard()">Copy to Clipboard</button>
+                <button class="btn btn-secondary" onclick="downloadFile()">Download .md File</button>
+            </div>
+            <div class="success-message" id="success-message">Copied to clipboard!</div>
+        </div>
+    </div>
+
+    <script>
+        function showChecklist(role) {
+            document.querySelectorAll('.checklist-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.role-tab').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(`${role}-checklist`).classList.add('active');
+            document.querySelector(`.role-tab.${role}`).classList.add('active');
+        }
+
+        function updatePreview() {
+            const teamName = document.getElementById('team-name').value || 'Team Name';
+            const runner = document.getElementById('runner-name').value || 'TBD';
+            const maintainer = document.getElementById('maintainer-name').value || 'TBD';
+            const analyst = document.getElementById('analyst-name').value || 'TBD';
+            const reviewer = document.getElementById('reviewer-name').value || 'TBD';
+
+            const output = `# Team Roster: ${teamName}
+
+## Role Assignments
+
+| Role | Team Member | Primary Responsibilities |
+|------|-------------|-------------------------|
+| Runner | ${runner} | Execute experiments, monitor training |
+| Maintainer | ${maintainer} | Manage repo, merge PRs, maintain docs |
+| Analyst | ${analyst} | Analyze results, create visualizations |
+| Reviewer | ${reviewer} | Review code, validate results |
+
+---
+
+## Detailed Responsibilities
+
+### Runner: ${runner}
+- Execute training scripts on designated hardware
+- Monitor TensorBoard during training
+- Report progress and issues to team
+- Save and organize output artifacts
+- Troubleshoot runtime errors
+
+### Maintainer: ${maintainer}
+- Manage Git repository and branches
+- Review and merge pull requests
+- Maintain README and documentation
+- Resolve merge conflicts
+- Create release tags
+
+### Analyst: ${analyst}
+- Define evaluation metrics and protocol
+- Analyze training results
+- Create visualizations and plots
+- Compare experiment runs
+- Write results summary
+
+### Reviewer: ${reviewer}
+- Review code changes for quality
+- Validate experiment results
+- Check documentation accuracy
+- Provide constructive feedback
+- Final approval for submissions
+
+---
+
+## Communication
+
+- **Primary Channel:** [Slack/Discord/Teams channel]
+- **Standup Time:** [Daily/Weekly meeting time]
+- **Decision Making:** Consensus, with Maintainer as tiebreaker
+
+---
+
+*Generated with Team Role Assigner*`;
+
+            document.getElementById('output-preview').textContent = output;
+        }
+
+        function copyToClipboard() {
+            const text = document.getElementById('output-preview').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const msg = document.getElementById('success-message');
+                msg.style.display = 'block';
+                setTimeout(() => msg.style.display = 'none', 2000);
+            });
+        }
+
+        function downloadFile() {
+            const text = document.getElementById('output-preview').textContent;
+            const blob = new Blob([text], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'team_roster.md';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        updatePreview();
+    </script>
+</body>
+</html>
